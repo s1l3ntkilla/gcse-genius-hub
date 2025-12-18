@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   BookOpen, 
   ChevronRight,
   Users,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
@@ -22,17 +25,79 @@ const subjects = [
   { name: 'Chemistry', progress: 55, color: 'bg-purple-500' },
 ];
 
-// Mock classmates data
-const classmates = [
-  { name: 'Alex', avatar: 'A', online: true },
-  { name: 'Sarah', avatar: 'S', online: true },
-  { name: 'Mike', avatar: 'M', online: false },
-  { name: 'Emma', avatar: 'E', online: true },
-  { name: 'James', avatar: 'J', online: false },
-];
+interface Classmate {
+  id: string;
+  name: string;
+  avatar: string;
+}
 
 export const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
+  const { user: supabaseUser } = useSupabaseAuth();
+  const [classmates, setClassmates] = useState<Classmate[]>([]);
+  const [totalClassmates, setTotalClassmates] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (supabaseUser) {
+      fetchClassmates();
+    } else {
+      setLoading(false);
+    }
+  }, [supabaseUser]);
+
+  const fetchClassmates = async () => {
+    try {
+      // Get classrooms the student is a member of
+      const { data: memberships } = await supabase
+        .from('classroom_members')
+        .select('classroom_id')
+        .eq('student_id', supabaseUser?.id)
+        .eq('status', 'accepted');
+
+      if (!memberships || memberships.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      const classroomIds = memberships.map(m => m.classroom_id);
+
+      // Get all members from those classrooms (excluding current user)
+      const { data: allMembers } = await supabase
+        .from('classroom_members')
+        .select('student_id')
+        .in('classroom_id', classroomIds)
+        .eq('status', 'accepted')
+        .neq('student_id', supabaseUser?.id);
+
+      if (!allMembers || allMembers.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      // Get unique student IDs
+      const uniqueStudentIds = [...new Set(allMembers.map(m => m.student_id))];
+      setTotalClassmates(uniqueStudentIds.length);
+
+      // Fetch profiles for first 5 classmates
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', uniqueStudentIds.slice(0, 5));
+
+      if (profiles) {
+        setClassmates(profiles.map(p => ({
+          id: p.id,
+          name: p.full_name || 'Student',
+          avatar: p.full_name?.charAt(0)?.toUpperCase() || 'S'
+        })));
+      }
+    } catch (error) {
+      console.error('Error fetching classmates:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
@@ -104,34 +169,41 @@ export const StudentDashboard: React.FC = () => {
             <CardHeader className="pb-4">
               <CardTitle className="font-display text-xl flex items-center gap-3">
                 <Users className="w-6 h-6 text-primary" />
-                Class
+                Classmates
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-3">
-                {classmates.map((classmate) => (
-                  <div key={classmate.name} className="relative group">
-                    <Avatar className="w-12 h-12 border-2 border-card shadow-md transition-transform hover:scale-110">
-                      <AvatarFallback className={cn(
-                        "font-semibold",
-                        classmate.online ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"
-                      )}>
-                        {classmate.avatar}
-                      </AvatarFallback>
-                    </Avatar>
-                    {classmate.online && (
-                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-success rounded-full border-2 border-card" />
-                    )}
-                  </div>
-                ))}
-                <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-muted-foreground text-sm font-medium">
-                  +12
+              {loading ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
-              </div>
+              ) : classmates.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground">No classmates yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Join a class to see your classmates</p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-3">
+                  {classmates.map((classmate) => (
+                    <div key={classmate.id} className="relative group">
+                      <Avatar className="w-12 h-12 border-2 border-card shadow-md transition-transform hover:scale-110">
+                        <AvatarFallback className="font-semibold bg-primary/10 text-primary">
+                          {classmate.avatar}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  ))}
+                  {totalClassmates > 5 && (
+                    <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-muted-foreground text-sm font-medium">
+                      +{totalClassmates - 5}
+                    </div>
+                  )}
+                </div>
+              )}
               
               <Button variant="gradient" className="w-full mt-4" asChild>
                 <Link to="/qa">
-                  Join Now
+                  View Classes
                 </Link>
               </Button>
             </CardContent>
