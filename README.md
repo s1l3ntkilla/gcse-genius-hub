@@ -1,4 +1,4 @@
-# Welcome to your Lovable project
+# Welcome to your Lovable project - Lovable x HGS Hackathon
 
 WHAT AN INCREDIBLE PROJECT 
 
