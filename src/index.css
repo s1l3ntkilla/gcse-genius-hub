@@ -5,6 +5,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Libre+Caslon+Text&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -29,7 +32,7 @@
     --primary-light: 217 91% 95%;
 
     /* Secondary - Soft Gray Blue */
-    --secondary: 0 0% 32%;
+    --secondary: 214 31.8182% 91.3725%;
     --secondary-foreground: 0 0% 98%;
 
     --muted: 0 0% 63%;
