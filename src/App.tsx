@@ -34,8 +34,9 @@ const RequireAuth: React.FC = () => {
     return <Navigate to="/auth" replace state={{ from: location }} />;
   }
 
-  // Check if profile needs completion (OAuth users without user_type)
-  if (profile && !profile.user_type && location.pathname !== '/onboarding') {
+  // Check if profile needs completion (OAuth users without subjects selected)
+  const needsOnboarding = profile && (!profile.subjects || profile.subjects.length === 0);
+  if (needsOnboarding && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
   }
 
@@ -57,8 +58,8 @@ const RequireOnboarding: React.FC = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // If profile is already complete, redirect to home
-  if (profile?.user_type) {
+  // If profile is already complete (has subjects), redirect to home
+  if (profile?.subjects && profile.subjects.length > 0) {
     return <Navigate to="/" replace />;
   }
 
