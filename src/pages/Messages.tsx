@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { MainLayout } from '@/components/layout';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -9,15 +9,10 @@ import {
   Search,
   Send,
   Paperclip,
-  MoreVertical,
-  Check,
-  CheckCheck,
   Image,
   File,
   MessageSquare,
-  Users,
-  Plus,
-  Mail
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,9 +44,6 @@ const Messages: React.FC = () => {
   const [messages, setMessages] = useState<GroupMessage[]>([]);
   const [isLoadingClassrooms, setIsLoadingClassrooms] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  const [createName, setCreateName] = useState('');
-  const [createSubject, setCreateSubject] = useState('');
-  const [inviteEmail, setInviteEmail] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
 
   const filteredClassrooms = useMemo(() => {
@@ -162,91 +154,6 @@ const Messages: React.FC = () => {
     setNewMessage('');
   };
 
-  const handleCreateClassroom = async () => {
-    if (!supabaseUser || !createName.trim()) return;
-    setActionError(null);
-
-    const { data: newGroup, error } = await supabase
-      .from('group_chats')
-      .insert({
-        group_name: createName.trim(),
-        subject: createSubject.trim() || null,
-        group_type: 'class_discussion',
-        created_by: supabaseUser.id
-      })
-      .select('id, group_name, subject')
-      .single();
-
-    if (error) {
-      console.error('Error creating classroom', error);
-      setActionError('Could not create classroom.');
-      return;
-    }
-
-    const { error: memberError } = await supabase
-      .from('group_members')
-      .insert({
-        group_id: newGroup.id,
-        user_id: supabaseUser.id,
-        role: 'creator'
-      });
-
-    if (memberError) {
-      console.error('Error linking classroom creator', memberError);
-      setActionError('Classroom was created but you were not added as a member.');
-    }
-
-    setCreateName('');
-    setCreateSubject('');
-    await fetchClassrooms();
-    setSelectedConversation(newGroup.id);
-  };
-
-  const handleInviteStudent = async () => {
-    if (!inviteEmail.trim() || !selectedConversation || !supabaseUser) return;
-    setActionError(null);
-
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, email, full_name')
-      .eq('email', inviteEmail.trim().toLowerCase())
-      .single();
-
-    if (profileError || !profile) {
-      setActionError('No user found with that email.');
-      return;
-    }
-
-    const { data: existing } = await supabase
-      .from('group_members')
-      .select('id')
-      .eq('group_id', selectedConversation)
-      .eq('user_id', profile.id)
-      .maybeSingle();
-
-    if (existing) {
-      setActionError('That student is already in this classroom.');
-      return;
-    }
-
-    const { error } = await supabase
-      .from('group_members')
-      .insert({
-        group_id: selectedConversation,
-        user_id: profile.id,
-        role: 'member'
-      });
-
-    if (error) {
-      console.error('Error adding student', error);
-      setActionError('Failed to add the student to this classroom.');
-      return;
-    }
-
-    setInviteEmail('');
-    await fetchClassrooms();
-  };
-
   return (
     <MainLayout>
       <div className="h-[calc(100vh-8rem)] flex gap-6 animate-fade-in">
@@ -274,11 +181,11 @@ const Messages: React.FC = () => {
               ) : filteredClassrooms.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">No classrooms yet</p>
+                  <p className="text-sm">No class chats yet</p>
                   <p className="text-xs mt-1">
                     {role === 'student'
-                      ? 'Messages from teachers will appear here'
-                      : 'Create a classroom to start messaging students'}
+                      ? 'Join a class to start chatting'
+                      : 'Create a class in My Classes to chat with students'}
                   </p>
                 </div>
               ) : (
@@ -317,52 +224,17 @@ const Messages: React.FC = () => {
               )}
             </div>
           </ScrollArea>
-
-          {role === 'teacher' && (
-            <div className="p-4 border-t border-border space-y-3">
-              <div className="flex items-center gap-2">
-                <Input
-                  placeholder="New classroom name"
-                  value={createName}
-                  onChange={(e) => setCreateName(e.target.value)}
-                />
-                <Input
-                  placeholder="Subject (optional)"
-                  value={createSubject}
-                  onChange={(e) => setCreateSubject(e.target.value)}
-                />
-              </div>
-              <Button className="w-full gap-2" onClick={handleCreateClassroom} disabled={!createName.trim()}>
-                <Plus className="w-4 h-4" />
-                Create classroom
-              </Button>
-            </div>
-          )}
         </Card>
 
         {/* Chat Area */}
         <Card className="card-elevated flex-1 flex flex-col">
           {selectedConversation ? (
             <>
-              <div className="p-4 border-b border-border flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-lg">Classroom chat</p>
-                  {actionError && <p className="text-sm text-destructive mt-1">{actionError}</p>}
-                </div>
-                {role === 'teacher' && (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      placeholder="Student email"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      className="w-64"
-                    />
-                    <Button variant="outline" className="gap-2" onClick={handleInviteStudent}>
-                      <Mail className="w-4 h-4" />
-                      Add student
-                    </Button>
-                  </div>
-                )}
+              <div className="p-4 border-b border-border">
+                <p className="font-semibold text-lg">
+                  {classrooms.find(c => c.id === selectedConversation)?.name || 'Classroom chat'}
+                </p>
+                {actionError && <p className="text-sm text-destructive mt-1">{actionError}</p>}
               </div>
 
               <ScrollArea className="flex-1">
@@ -451,11 +323,11 @@ const Messages: React.FC = () => {
                 <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
                   <MessageSquare className="w-8 h-8 opacity-50" />
                 </div>
-                <h3 className="font-medium">No conversations</h3>
+                <h3 className="font-medium">Select a conversation</h3>
                 <p className="text-sm mt-1">
                   {role === 'student'
-                    ? 'Your teachers will message you here'
-                    : 'Create or select a classroom to start messaging'}
+                    ? 'Choose a class to start chatting'
+                    : 'Select a classroom to message your students'}
                 </p>
               </div>
             </div>

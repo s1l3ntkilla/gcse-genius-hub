@@ -52,18 +52,47 @@ const CreateClassroomModal: React.FC<CreateClassroomModalProps> = ({
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      // Create the classroom
+      const { data: classroom, error } = await supabase
         .from('classrooms')
         .insert({
           name,
           subject,
           description: description || null,
           teacher_id: user.id
-        });
+        })
+        .select('id')
+        .single();
 
       if (error) throw error;
 
-      toast.success('Classroom created successfully!');
+      // Create a group chat for this classroom
+      const { data: groupChat, error: groupError } = await supabase
+        .from('group_chats')
+        .insert({
+          group_name: name,
+          subject: subject,
+          group_type: 'class_discussion',
+          description: JSON.stringify({ classroom_id: classroom.id }),
+          created_by: user.id
+        })
+        .select('id')
+        .single();
+
+      if (groupError) {
+        console.error('Error creating group chat:', groupError);
+      } else if (groupChat) {
+        // Add teacher to the group chat
+        await supabase
+          .from('group_members')
+          .insert({
+            group_id: groupChat.id,
+            user_id: user.id,
+            role: 'creator'
+          });
+      }
+
+      toast.success('Classroom created with group chat!');
       onSuccess();
       onOpenChange(false);
       resetForm();

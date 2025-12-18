@@ -137,6 +137,37 @@ serve(async (req) => {
       );
     }
 
+    // Add student to the classroom's group chat
+    try {
+      const { data: groupChats } = await adminClient
+        .from("group_chats")
+        .select("id, description")
+        .eq("group_type", "class_discussion");
+
+      if (groupChats) {
+        const classroomGroupChat = groupChats.find((gc: { id: string; description: string | null }) => {
+          try {
+            const desc = JSON.parse(gc.description || "{}");
+            return desc.classroom_id === classroom.id;
+          } catch {
+            return false;
+          }
+        });
+
+        if (classroomGroupChat) {
+          await adminClient
+            .from("group_members")
+            .upsert({
+              group_id: classroomGroupChat.id,
+              user_id: userId,
+              role: "member",
+            });
+        }
+      }
+    } catch (groupErr) {
+      console.error("join-classroom: failed to add to group chat", groupErr);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

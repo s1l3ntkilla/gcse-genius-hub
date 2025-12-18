@@ -14,7 +14,8 @@ import {
   Mail,
   CheckCircle,
   XCircle,
-  KeyRound
+  KeyRound,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -199,6 +200,33 @@ const MyClasses: React.FC = () => {
           joined_at: new Date().toISOString()
         });
 
+      // Add student to the classroom's group chat
+      const { data: groupChats } = await supabase
+        .from('group_chats')
+        .select('id, description')
+        .eq('group_type', 'class_discussion');
+
+      if (groupChats) {
+        const classroomGroupChat = groupChats.find(gc => {
+          try {
+            const desc = JSON.parse(gc.description || '{}');
+            return desc.classroom_id === classroomId;
+          } catch {
+            return false;
+          }
+        });
+
+        if (classroomGroupChat && user) {
+          await supabase
+            .from('group_members')
+            .upsert({
+              group_id: classroomGroupChat.id,
+              user_id: user.id,
+              role: 'member'
+            });
+        }
+      }
+
       toast.success('You have joined the class!');
       fetchData();
     } catch (error) {
@@ -222,6 +250,133 @@ const MyClasses: React.FC = () => {
     }
   };
 
+  const handleCreateAllGroupChats = async () => {
+    if (!user) {
+      toast.error('You must be logged in');
+      return;
+    }
+    
+    if (classrooms.length === 0) {
+      toast.error('No classrooms found. Create a classroom first.');
+      return;
+    }
+
+    toast.info(`Found ${classrooms.length} classroom(s). Creating group chats...`);
+
+    try {
+      // Get all existing group chats
+      const { data: existingChats, error: fetchError } = await supabase
+        .from('group_chats')
+        .select('id, description')
+        .eq('group_type', 'class_discussion');
+
+      if (fetchError) {
+        console.error('Error fetching existing chats:', fetchError);
+        toast.error(`Error: ${fetchError.message}`);
+        return;
+      }
+
+      console.log('Existing chats:', existingChats);
+
+      const existingClassroomIds = new Set(
+        (existingChats || [])
+          .map(gc => {
+            try {
+              const desc = JSON.parse(gc.description || '{}');
+              return desc.classroom_id;
+            } catch {
+              return null;
+            }
+          })
+          .filter(Boolean)
+      );
+
+      console.log('Existing classroom IDs with chats:', existingClassroomIds);
+
+      // Find classrooms without group chats
+      const classroomsWithoutChats = classrooms.filter(c => !existingClassroomIds.has(c.id));
+      console.log('Classrooms without chats:', classroomsWithoutChats);
+
+      if (classroomsWithoutChats.length === 0) {
+        toast.info('All classrooms already have group chats!');
+        return;
+      }
+
+      let created = 0;
+      let errors: string[] = [];
+      
+      for (const classroom of classroomsWithoutChats) {
+        console.log('Creating group chat for:', classroom.name);
+        
+        // Create group chat
+        const { data: groupChat, error: groupError } = await supabase
+          .from('group_chats')
+          .insert({
+            group_name: classroom.name,
+            subject: classroom.subject,
+            group_type: 'class_discussion',
+            description: JSON.stringify({ classroom_id: classroom.id }),
+            created_by: user.id
+          })
+          .select('id')
+          .single();
+
+        if (groupError) {
+          console.error('Error creating group chat for', classroom.name, groupError);
+          errors.push(`${classroom.name}: ${groupError.message}`);
+          continue;
+        }
+
+        console.log('Created group chat:', groupChat);
+
+        // Add teacher to group chat
+        const { error: memberError } = await supabase
+          .from('group_members')
+          .insert({
+            group_id: groupChat.id,
+            user_id: user.id,
+            role: 'creator'
+          });
+
+        if (memberError) {
+          console.error('Error adding teacher to group:', memberError);
+        }
+
+        // Add existing students to group chat
+        const { data: members } = await supabase
+          .from('classroom_members')
+          .select('student_id')
+          .eq('classroom_id', classroom.id)
+          .eq('status', 'accepted');
+
+        if (members && members.length > 0) {
+          const memberInserts = members.map(m => ({
+            group_id: groupChat.id,
+            user_id: m.student_id,
+            role: 'member'
+          }));
+
+          await supabase.from('group_members').insert(memberInserts);
+        }
+
+        created++;
+      }
+
+      if (errors.length > 0) {
+        toast.error(`Errors: ${errors.join(', ')}`);
+      }
+      
+      if (created > 0) {
+        toast.success(`Created ${created} group chat${created !== 1 ? 's' : ''}! Check Messages.`);
+      } else {
+        toast.error('No group chats were created. Check browser console for errors.');
+      }
+    } catch (error) {
+      console.error('Error creating group chats:', error);
+      toast.error(`Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6 animate-fade-in">
@@ -239,10 +394,16 @@ const MyClasses: React.FC = () => {
             </p>
           </div>
           {role === 'teacher' ? (
-            <Button onClick={() => setCreateModalOpen(true)} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Create Classroom
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleCreateAllGroupChats} className="gap-2">
+                <MessageSquare className="w-4 h-4" />
+                Enable All Chats
+              </Button>
+              <Button onClick={() => setCreateModalOpen(true)} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Create Classroom
+              </Button>
+            </div>
           ) : (
             <Button onClick={() => setJoinModalOpen(true)} className="gap-2">
               <KeyRound className="w-4 h-4" />
