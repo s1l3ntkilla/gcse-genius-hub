@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   FileText, 
   Clock, 
@@ -16,7 +18,8 @@ import {
   ChevronRight,
   Star,
   Sparkles,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,6 +27,16 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import AssignmentWizard from '@/components/features/AssignmentWizard';
 import { format } from 'date-fns';
+
+interface GeneratedQuestion {
+  id: string;
+  question: string;
+  marks: number;
+  commandWord: string;
+  subtopic: string;
+  difficulty: string;
+  markScheme: string[];
+}
 
 interface Assignment {
   id: string;
@@ -39,6 +52,7 @@ interface Assignment {
   teacher_id: string;
   status: string;
   created_at: string;
+  questions?: GeneratedQuestion[];
   classroom?: { name: string };
 }
 
@@ -61,6 +75,7 @@ const Assignments: React.FC = () => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -81,7 +96,7 @@ const Assignments: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (assignmentsError) throw assignmentsError;
-      setAssignments(assignmentsData || []);
+      setAssignments((assignmentsData || []) as unknown as Assignment[]);
 
       // For students, also fetch their submissions
       if (role === 'student') {
@@ -130,7 +145,11 @@ const Assignments: React.FC = () => {
     const isOverdue = dueDate && dueDate < new Date() && (!submission || submission.status === 'pending');
 
     return (
-      <Card key={assignment.id} className="card-elevated hover:shadow-lg transition-shadow">
+      <Card 
+        key={assignment.id} 
+        className="card-elevated hover:shadow-lg transition-shadow cursor-pointer"
+        onClick={() => setSelectedAssignment(assignment)}
+      >
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -166,9 +185,7 @@ const Assignments: React.FC = () => {
                 )}
               </div>
             </div>
-            <Button variant="ghost" size="icon">
-              <ChevronRight className="w-5 h-5" />
-            </Button>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </div>
           {submission?.status === 'graded' && submission.score !== null && (
             <div className="mt-3 pt-3 border-t">
@@ -330,6 +347,75 @@ const Assignments: React.FC = () => {
             </TabsContent>
           </Tabs>
         )}
+
+        {/* Assignment Detail Dialog */}
+        <Dialog open={!!selectedAssignment} onOpenChange={(open) => !open && setSelectedAssignment(null)}>
+          <DialogContent className="max-w-3xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary" />
+                {selectedAssignment?.title}
+              </DialogTitle>
+            </DialogHeader>
+            {selectedAssignment && (
+              <ScrollArea className="max-h-[70vh] pr-4">
+                <div className="space-y-6">
+                  {/* Assignment Info */}
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline">{selectedAssignment.subject}</Badge>
+                    <Badge variant="secondary">{selectedAssignment.exam_board}</Badge>
+                    <Badge variant="outline">{selectedAssignment.topic}</Badge>
+                    {selectedAssignment.due_date && (
+                      <Badge variant="outline" className="gap-1">
+                        <Calendar className="w-3 h-3" />
+                        Due {format(new Date(selectedAssignment.due_date), 'MMM d, yyyy')}
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>{selectedAssignment.question_count} questions</span>
+                    <span>•</span>
+                    <span>{selectedAssignment.total_marks} marks total</span>
+                  </div>
+
+                  {/* Questions */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">Questions</h3>
+                    {selectedAssignment.questions && Array.isArray(selectedAssignment.questions) ? (
+                      selectedAssignment.questions.map((question, index) => (
+                        <Card key={question.id || index} className="border-l-4 border-l-primary">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="text-sm font-medium text-primary">Q{index + 1}</span>
+                                  <Badge variant="outline" className="text-xs">{question.commandWord}</Badge>
+                                  <Badge variant="secondary" className="text-xs">{question.difficulty}</Badge>
+                                </div>
+                                <p className="text-foreground">{question.question}</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Topic: {question.subtopic}
+                                </p>
+                              </div>
+                              <Badge className="bg-primary/10 text-primary hover:bg-primary/20">
+                                {question.marks} {question.marks === 1 ? 'mark' : 'marks'}
+                              </Badge>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground text-center py-4">
+                        No questions available
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </ScrollArea>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </MainLayout>
   );
