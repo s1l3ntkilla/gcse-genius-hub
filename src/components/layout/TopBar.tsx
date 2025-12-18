@@ -1,0 +1,109 @@
+import React, { useState } from 'react';
+import { Bell, Search, Hand } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { sampleNotifications } from '@/data/sampleData';
+import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
+import { QuickQuestionModal } from '../features/QuickQuestionModal';
+
+export const TopBar: React.FC = () => {
+  const { role } = useAuth();
+  const [showQuestionModal, setShowQuestionModal] = useState(false);
+  const unreadCount = sampleNotifications.filter(n => !n.read).length;
+
+  return (
+    <>
+      <header className="sticky top-0 z-30 h-16 bg-card/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6">
+        {/* Search Bar */}
+        <div className="relative w-96">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search lessons, topics, messages..."
+            className="pl-10 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary"
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-3">
+          {/* Quick Question Button (Student only) */}
+          {role === 'student' && (
+            <Button
+              variant="default"
+              size="sm"
+              className="gap-2 bg-primary hover:bg-primary-dark btn-glow"
+              onClick={() => setShowQuestionModal(true)}
+            >
+              <Hand className="w-4 h-4" />
+              <span className="hidden sm:inline">Raise Hand</span>
+            </Button>
+          )}
+
+          {/* Notifications */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <Badge 
+                    className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-destructive"
+                  >
+                    {unreadCount}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80">
+              <DropdownMenuLabel className="flex items-center justify-between">
+                Notifications
+                <span className="text-xs text-muted-foreground font-normal">
+                  {unreadCount} unread
+                </span>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {sampleNotifications.slice(0, 5).map((notification) => (
+                <DropdownMenuItem 
+                  key={notification.id}
+                  className={cn(
+                    "flex flex-col items-start gap-1 cursor-pointer",
+                    !notification.read && "bg-primary/5"
+                  )}
+                >
+                  <div className="flex items-center gap-2 w-full">
+                    {!notification.read && (
+                      <div className="w-2 h-2 rounded-full bg-primary" />
+                    )}
+                    <span className="font-medium text-sm truncate">
+                      {notification.title}
+                    </span>
+                  </div>
+                  <span className="text-xs text-muted-foreground pl-4">
+                    {notification.content}
+                  </span>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-center text-primary text-sm">
+                View all notifications
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
+
+      <QuickQuestionModal 
+        open={showQuestionModal} 
+        onOpenChange={setShowQuestionModal} 
+      />
+    </>
+  );
+};
