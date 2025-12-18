@@ -18,13 +18,15 @@ import {
   Send,
   Trash2,
   Plus,
-  Loader2
+  Loader2,
+  KeyRound
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import JoinClassModal from '@/components/features/JoinClassModal';
 
 interface ClassroomQuestion {
   id: string;
@@ -67,6 +69,7 @@ const ClassroomQA: React.FC = () => {
   const [newCategory, setNewCategory] = useState('General');
   const [selectedClassroomId, setSelectedClassroomId] = useState<string>('');
   const [isAnonymous, setIsAnonymous] = useState(true);
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -104,7 +107,8 @@ const ClassroomQA: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      await Promise.all([fetchClassrooms(), fetchQuestions()]);
+      await fetchClassrooms();
+      await fetchQuestions();
     } finally {
       setLoading(false);
     }
@@ -345,7 +349,7 @@ const ClassroomQA: React.FC = () => {
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground flex items-center gap-3">
               <Hand className="w-8 h-8 text-primary" />
-              {role === 'student' ? 'Classroom Q&A' : 'Student Questions'}
+              {role === 'student' ? 'Classroom' : 'Student Questions'}
             </h1>
             <p className="text-muted-foreground mt-1">
               {role === 'student' 
@@ -359,6 +363,17 @@ const ClassroomQA: React.FC = () => {
               <Badge variant="destructive" className="text-sm px-4 py-2">
                 {pendingCount} questions pending
               </Badge>
+            )}
+
+            {role === 'student' && (
+              <Button
+                variant="outline"
+                onClick={() => setJoinModalOpen(true)}
+                className="gap-2"
+              >
+                <KeyRound className="w-4 h-4" />
+                Join with Code
+              </Button>
             )}
             
             {role === 'student' && classrooms.length > 0 && (
@@ -467,6 +482,12 @@ const ClassroomQA: React.FC = () => {
                   ? 'Join a classroom first to ask questions'
                   : 'Create a classroom to receive student questions'}
               </p>
+              {role === 'student' && (
+                <Button onClick={() => setJoinModalOpen(true)} className="mt-4 gap-2">
+                  <KeyRound className="w-4 h-4" />
+                  Join with Code
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
@@ -693,6 +714,14 @@ const ClassroomQA: React.FC = () => {
           </>
         )}
       </div>
+
+      <JoinClassModal
+        open={joinModalOpen}
+        onOpenChange={setJoinModalOpen}
+        onSuccess={() => {
+          void fetchData();
+        }}
+      />
     </MainLayout>
   );
 };
