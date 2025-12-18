@@ -90,6 +90,59 @@ export type Database = {
           },
         ]
       }
+      classroom_questions: {
+        Row: {
+          anonymous: boolean | null
+          answer: string | null
+          answered: boolean | null
+          answered_at: string | null
+          answered_by: string | null
+          category: string | null
+          classroom_id: string
+          created_at: string
+          id: string
+          question: string
+          student_id: string
+          topic: string | null
+        }
+        Insert: {
+          anonymous?: boolean | null
+          answer?: string | null
+          answered?: boolean | null
+          answered_at?: string | null
+          answered_by?: string | null
+          category?: string | null
+          classroom_id: string
+          created_at?: string
+          id?: string
+          question: string
+          student_id: string
+          topic?: string | null
+        }
+        Update: {
+          anonymous?: boolean | null
+          answer?: string | null
+          answered?: boolean | null
+          answered_at?: string | null
+          answered_by?: string | null
+          category?: string | null
+          classroom_id?: string
+          created_at?: string
+          id?: string
+          question?: string
+          student_id?: string
+          topic?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classroom_questions_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       classrooms: {
         Row: {
           class_code: string | null

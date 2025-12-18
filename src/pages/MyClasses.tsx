@@ -3,7 +3,6 @@ import { MainLayout } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Users, 
   Plus, 
@@ -14,8 +13,8 @@ import {
   Video,
   Mail,
   CheckCircle,
-  Clock,
-  XCircle
+  XCircle,
+  KeyRound
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,6 +23,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import CreateClassroomModal from '@/components/features/CreateClassroomModal';
 import InviteStudentModal from '@/components/features/InviteStudentModal';
+import JoinClassModal from '@/components/features/JoinClassModal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,6 +65,7 @@ const MyClasses: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [selectedClassroom, setSelectedClassroom] = useState<Classroom | null>(null);
 
   useEffect(() => {
@@ -237,10 +238,15 @@ const MyClasses: React.FC = () => {
                 : 'Create and manage your classrooms'}
             </p>
           </div>
-          {role === 'teacher' && (
-            <Button onClick={() => setCreateModalOpen(true)} className="bg-primary hover:bg-primary-dark gap-2">
+          {role === 'teacher' ? (
+            <Button onClick={() => setCreateModalOpen(true)} className="gap-2">
               <Plus className="w-4 h-4" />
               Create Classroom
+            </Button>
+          ) : (
+            <Button onClick={() => setJoinModalOpen(true)} className="gap-2">
+              <KeyRound className="w-4 h-4" />
+              Join with Code
             </Button>
           )}
         </div>
@@ -439,6 +445,11 @@ const MyClasses: React.FC = () => {
         open={inviteModalOpen}
         onOpenChange={setInviteModalOpen}
         classroom={selectedClassroom}
+        onSuccess={fetchData}
+      />
+      <JoinClassModal
+        open={joinModalOpen}
+        onOpenChange={setJoinModalOpen}
         onSuccess={fetchData}
       />
     </MainLayout>
