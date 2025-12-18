@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { MainLayout } from '@/components/layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 type Classroom = {
   id: string;
@@ -45,10 +46,21 @@ const Messages: React.FC = () => {
   const [isLoadingClassrooms, setIsLoadingClassrooms] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
   
   // Get current user's display name and initials
   const myName = profile?.full_name || user?.name || 'You';
   const myInitials = myName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'ME';
+
+  // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   const filteredClassrooms = useMemo(() => {
     if (!searchQuery.trim()) return classrooms;
@@ -123,10 +135,74 @@ const Messages: React.FC = () => {
   useEffect(() => {
     if (selectedConversation) {
       fetchMessages(selectedConversation);
+      
+      // Set up real-time subscription for new messages
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
+      
+      const channel = supabase
+        .channel(`group_messages:${selectedConversation}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'group_messages',
+            filter: `group_id=eq.${selectedConversation}`
+          },
+          async (payload) => {
+            const newMsg = payload.new as {
+              id: string;
+              sender_id: string;
+              message_content: string;
+              created_at: string;
+              group_id: string;
+            };
+            
+            // Don't add if it's our own message (already added optimistically)
+            if (newMsg.sender_id === supabaseUser?.id) return;
+            
+            // Fetch sender's name
+            let senderName = 'Classmate';
+            const { data: senderProfile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', newMsg.sender_id)
+              .single();
+            
+            if (senderProfile?.full_name) {
+              senderName = senderProfile.full_name;
+            }
+            
+            setMessages((prev) => {
+              // Check if message already exists
+              if (prev.some(m => m.id === newMsg.id)) return prev;
+              return [...prev, {
+                id: newMsg.id,
+                sender_id: newMsg.sender_id,
+                message_content: newMsg.message_content,
+                created_at: newMsg.created_at,
+                sender_name: senderName
+              }];
+            });
+          }
+        )
+        .subscribe();
+      
+      channelRef.current = channel;
     } else {
       setMessages([]);
     }
-  }, [selectedConversation]);
+    
+    // Cleanup subscription on unmount or conversation change
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [selectedConversation, supabaseUser?.id]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || !supabaseUser) return;
@@ -300,6 +376,7 @@ const Messages: React.FC = () => {
                     );
                   })
                   )}
+                  <div ref={messagesEndRef} />
                 </div>
               </ScrollArea>
 
