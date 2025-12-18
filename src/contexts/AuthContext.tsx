@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { User, UserRole } from '@/types';
-import { sampleStudents, sampleTeachers } from '@/data/sampleData';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { User, UserRole, Subject } from '@/types';
+import { useSupabaseAuth } from './SupabaseAuthContext';
 
 interface AuthContextType {
   user: User | null;
@@ -14,39 +14,52 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(sampleStudents[0]);
+  const { profile, isAuthenticated, signOut, loading } = useSupabaseAuth();
   const [role, setRole] = useState<UserRole>('student');
+  const [user, setUser] = useState<User | null>(null);
+
+  // Sync user data from Supabase profile
+  useEffect(() => {
+    if (profile) {
+      const mappedUser: User = {
+        id: profile.id,
+        name: profile.full_name || profile.email,
+        email: profile.email,
+        role: profile.user_type === 'teacher' ? 'teacher' : 'student',
+        avatar: profile.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || profile.email[0].toUpperCase(),
+        subjects: (profile.subjects || []) as Subject[],
+      };
+      setUser(mappedUser);
+      setRole(profile.user_type === 'teacher' ? 'teacher' : 'student');
+    } else {
+      setUser(null);
+    }
+  }, [profile]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Mock login - in real app, this would call an API
-    const allUsers = [...sampleStudents, ...sampleTeachers];
-    const foundUser = allUsers.find(u => u.email === email);
-    
-    if (foundUser) {
-      setUser(foundUser);
-      setRole(foundUser.role);
-      return true;
-    }
+    // This is now handled by Supabase auth in Auth.tsx
     return false;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await signOut();
     setUser(null);
     setRole('student');
   };
 
   const switchRole = () => {
+    // For demo/testing - toggle between student and teacher views
     if (role === 'student') {
-      setUser(sampleTeachers[0]);
       setRole('teacher');
+      if (user) setUser({ ...user, role: 'teacher' });
     } else {
-      setUser(sampleStudents[0]);
       setRole('student');
+      if (user) setUser({ ...user, role: 'student' });
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, role, login, logout, switchRole }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, role, login, logout, switchRole }}>
       {children}
     </AuthContext.Provider>
   );
