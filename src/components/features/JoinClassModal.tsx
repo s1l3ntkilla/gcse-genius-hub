@@ -51,55 +51,33 @@ const JoinClassModal: React.FC<JoinClassModalProps> = ({
 
     setLoading(true);
     try {
-      // Find the classroom by code
-      const { data: classroom, error: findError } = await supabase
-        .from('classrooms')
-        .select('id, name, subject, teacher_id')
-        .eq('class_code', upperCode)
-        .single();
-
-      if (findError || !classroom) {
-        setError('Invalid class code. Please check and try again.');
-        setLoading(false);
+      if (!user) {
+        setError('You must be signed in to join a class.');
         return;
       }
 
-      // Check if already a member
-      const { data: existingMember } = await supabase
-        .from('classroom_members')
-        .select('id, status')
-        .eq('classroom_id', classroom.id)
-        .eq('student_id', user?.id)
-        .single();
+      const { data, error: invokeError } = await supabase.functions.invoke('join-classroom', {
+        body: { code: upperCode },
+      });
 
-      if (existingMember) {
-        if (existingMember.status === 'accepted') {
-          setError('You are already a member of this class.');
-        } else {
-          setError('You already have a pending request for this class.');
-        }
-        setLoading(false);
+      if (invokeError) {
+        console.error('join-classroom invoke error:', invokeError);
+        setError((data as any)?.error || 'Failed to join the class. Please try again.');
         return;
       }
 
-      // Add student to classroom
-      const { error: joinError } = await supabase
-        .from('classroom_members')
-        .insert({
-          classroom_id: classroom.id,
-          student_id: user?.id,
-          status: 'accepted',
-          joined_at: new Date().toISOString(),
-        });
-
-      if (joinError) {
-        console.error('Join error:', joinError);
-        setError('Failed to join the class. Please try again.');
-        setLoading(false);
+      if (!data?.success) {
+        setError(data?.error || 'Invalid class code. Please check and try again.');
         return;
       }
 
-      toast.success(`Successfully joined ${classroom.name}!`);
+      const classroomName = data.classroom?.name || 'the class';
+      if (data.already_member) {
+        toast.message(`You're already in ${classroomName}.`);
+      } else {
+        toast.success(`Successfully joined ${classroomName}!`);
+      }
+
       setClassCode('');
       onOpenChange(false);
       onSuccess();
