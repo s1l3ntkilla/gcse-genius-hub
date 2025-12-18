@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Eye, EyeOff, Loader2, BookOpen, Github, Mail, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Github, Mail, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { z } from 'zod';
+import notelyLogo from '@/assets/notedly-logo.png';
 
 // Validation schemas
 const emailSchema = z.string().trim().email({ message: "Invalid email address" }).max(255);
@@ -241,7 +242,7 @@ const Auth: React.FC = () => {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md card-elevated">
           <CardContent className="pt-8 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-success/10 flex items-center justify-center">
@@ -267,14 +268,13 @@ const Auth: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md card-elevated">
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <BookOpen className="w-8 h-8 text-primary" />
-            <span className="font-display text-2xl font-bold">LearnHub</span>
+          <div className="flex items-center justify-center mb-4">
+            <img src={notelyLogo} alt="Notely" className="h-10" />
           </div>
-          <CardTitle className="text-2xl">
+          <CardTitle className="text-2xl font-display">
             {isLogin ? 'Welcome Back' : 'Create Account'}
           </CardTitle>
           <CardDescription>

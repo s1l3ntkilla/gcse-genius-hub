@@ -13,43 +13,44 @@ export default {
   		}
   	},
   	extend: {
-  		fontFamily: {
-  			sans: [
-  				'Open Sans',
-  				'ui-sans-serif',
-  				'system-ui',
-  				'sans-serif',
-  				'Apple Color Emoji',
-  				'Segoe UI Emoji',
-  				'Segoe UI Symbol',
-  				'Noto Color Emoji'
-  			],
-  			display: [
-  				'Plus Jakarta Sans',
-  				'system-ui',
-  				'sans-serif'
-  			],
-  			serif: [
-  				'Libre Caslon Text',
-  				'ui-serif',
-  				'Georgia',
-  				'Cambria',
-  				'Times New Roman',
-  				'Times',
-  				'serif'
-  			],
-  			mono: [
-  				'Roboto Mono',
-  				'ui-monospace',
-  				'SFMono-Regular',
-  				'Menlo',
-  				'Monaco',
-  				'Consolas',
-  				'Liberation Mono',
-  				'Courier New',
-  				'monospace'
-  			]
-  		},
+		fontFamily: {
+			sans: [
+				'Inter',
+				'ui-sans-serif',
+				'system-ui',
+				'sans-serif',
+				'Apple Color Emoji',
+				'Segoe UI Emoji',
+				'Segoe UI Symbol',
+				'Noto Color Emoji'
+			],
+			display: [
+				'Plus Jakarta Sans',
+				'Inter',
+				'system-ui',
+				'sans-serif'
+			],
+			serif: [
+				'Libre Caslon Text',
+				'ui-serif',
+				'Georgia',
+				'Cambria',
+				'Times New Roman',
+				'Times',
+				'serif'
+			],
+			mono: [
+				'Roboto Mono',
+				'ui-monospace',
+				'SFMono-Regular',
+				'Menlo',
+				'Monaco',
+				'Consolas',
+				'Liberation Mono',
+				'Courier New',
+				'monospace'
+			]
+		},
   		colors: {
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
@@ -107,14 +108,17 @@ export default {
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
   			},
-  			subject: {
-  				maths: 'hsl(var(--subject-maths))',
-  				chemistry: 'hsl(var(--subject-chemistry))',
-  				biology: 'hsl(var(--subject-biology))',
-  				cs: 'hsl(var(--subject-cs))',
-  				french: 'hsl(var(--subject-french))',
-  				music: 'hsl(var(--subject-music))'
-  			}
+			subject: {
+				english: 'hsl(var(--subject-english))',
+				maths: 'hsl(var(--subject-maths))',
+				physics: 'hsl(var(--subject-physics))',
+				biology: 'hsl(var(--subject-biology))',
+				computing: 'hsl(var(--subject-computing))',
+				chemistry: 'hsl(var(--subject-chemistry))',
+				cs: 'hsl(var(--subject-cs))',
+				french: 'hsl(var(--subject-french))',
+				music: 'hsl(var(--subject-music))'
+			}
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
