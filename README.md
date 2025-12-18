@@ -6,8 +6,8 @@ Done for Hulme Hackathon 2025
 
 Couldn't of done it without:
 
-- Ayaan Hussain
-- Daniel (LK) Chan
+- Ayaan Hussain (@wafidzn)
+- Daniel (LK) Chan (@daniellkchan)
 - Joshua Ogidi
 - Cameron Goddard
 - Jack Jolley
