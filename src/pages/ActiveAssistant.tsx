@@ -53,6 +53,7 @@ const ActiveAssistant: React.FC = () => {
   const { toast } = useToast();
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState<TranscriptChunk[]>([]);
+  const [interimText, setInterimText] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -92,8 +93,10 @@ const ActiveAssistant: React.FC = () => {
 
     recognition.onresult = (event) => {
       const lastResult = event.results[event.results.length - 1];
+      const text = lastResult[0].transcript.trim();
+      
       if (lastResult.isFinal) {
-        const text = lastResult[0].transcript.trim();
+        setInterimText('');
         if (text) {
           setTranscript(prev => [...prev, {
             id: crypto.randomUUID(),
@@ -101,6 +104,9 @@ const ActiveAssistant: React.FC = () => {
             timestamp: new Date()
           }]);
         }
+      } else {
+        // Show interim (live) text as it's being spoken
+        setInterimText(text);
       }
     };
 
@@ -350,6 +356,12 @@ const ActiveAssistant: React.FC = () => {
                     </p>
                   </div>
                 ))}
+                {interimText && (
+                  <div className="p-3 bg-primary/10 rounded-lg border border-primary/30 animate-pulse">
+                    <p className="text-sm leading-relaxed text-muted-foreground italic">{interimText}</p>
+                    <p className="text-xs text-muted-foreground/60 mt-2">Speaking...</p>
+                  </div>
+                )}
                 <div ref={transcriptEndRef} />
               </div>
             )}
