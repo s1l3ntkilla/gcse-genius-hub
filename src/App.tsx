@@ -13,12 +13,13 @@ import ClassroomQA from "./pages/ClassroomQA";
 import Lessons from "./pages/Lessons";
 import Assignments from "./pages/Assignments";
 import Auth from "./pages/Auth";
+import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const RequireAuth: React.FC = () => {
-  const { isAuthenticated, loading } = useSupabaseAuth();
+  const { isAuthenticated, loading, profile } = useSupabaseAuth();
   const location = useLocation();
 
   if (loading) {
@@ -33,12 +34,44 @@ const RequireAuth: React.FC = () => {
     return <Navigate to="/auth" replace state={{ from: location }} />;
   }
 
+  // Check if profile needs completion (OAuth users without user_type)
+  if (profile && !profile.user_type && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  return <Outlet />;
+};
+
+const RequireOnboarding: React.FC = () => {
+  const { isAuthenticated, loading, profile } = useSupabaseAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // If profile is already complete, redirect to home
+  if (profile?.user_type) {
+    return <Navigate to="/" replace />;
+  }
+
   return <Outlet />;
 };
 
 const AppRoutes = () => (
   <Routes>
     <Route path="/auth" element={<Auth />} />
+
+    <Route element={<RequireOnboarding />}>
+      <Route path="/onboarding" element={<Onboarding />} />
+    </Route>
 
     <Route element={<RequireAuth />}>
       <Route path="/" element={<Index />} />
