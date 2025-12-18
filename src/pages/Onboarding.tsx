@@ -47,13 +47,16 @@ const Onboarding: React.FC = () => {
 
     setIsLoading(true);
     try {
+      // Use upsert to handle both new profiles (OAuth) and existing profiles
       const { error } = await supabase
         .from('profiles')
-        .update({
+        .upsert({
+          id: user?.id,
+          email: user?.email || '',
           user_type: userType,
           subjects: selectedSubjects,
-        })
-        .eq('id', user?.id);
+          full_name: user?.user_metadata?.full_name || user?.user_metadata?.name || null,
+        }, { onConflict: 'id' });
 
       if (error) throw error;
 
