@@ -141,7 +141,7 @@ const Onboarding: React.FC = () => {
                 >
                   <Checkbox
                     checked={selectedSubjects.includes(subject.id)}
-                    onCheckedChange={() => toggleSubject(subject.id)}
+                    onClick={(e) => e.stopPropagation()}
                   />
                   <span className="text-sm font-medium">{subject.label}</span>
                 </div>
