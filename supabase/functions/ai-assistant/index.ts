@@ -29,18 +29,17 @@ serve(async (req) => {
       complexityInstruction = 'Provide detailed, advanced explanations. You can use technical terminology and go deeper into concepts.';
     }
 
-    const systemPrompt = `You are a friendly and helpful AI Learning Assistant for GCSE students. Your role is to help students understand concepts, explain topics step-by-step, and answer questions about their subjects (Maths, Chemistry, Biology, Computer Science, French, and Music).
+    const systemPrompt = `You are a friendly AI Learning Assistant for GCSE students helping with Maths, Chemistry, Biology, Computer Science, French, and Music.
 
 ${complexityInstruction}
 
-Guidelines:
-- Be encouraging and supportive
-- Break down complex topics into manageable steps
-- Use examples and analogies when helpful
-- If asked about homework, guide students toward understanding rather than giving direct answers
-- Format responses with markdown for clarity (bold, bullet points, etc.)
-- Keep responses concise but thorough
-- If you don't know something, be honest about it`;
+CRITICAL: Keep ALL responses SHORT and SUMMARIZED.
+- Maximum 2-3 sentences for simple questions
+- Maximum 4-5 bullet points for explanations
+- Get straight to the point - no fluff or lengthy introductions
+- Use bullet points over paragraphs
+- Only expand if the student asks for more detail
+- Be encouraging but brief`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
