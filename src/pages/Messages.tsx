@@ -139,10 +139,13 @@ const Messages: React.FC = () => {
       // Set up real-time subscription for new messages
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
       
+      console.log('[Realtime] Setting up subscription for group:', selectedConversation);
+      
       const channel = supabase
-        .channel(`group_messages:${selectedConversation}`)
+        .channel(`group-chat-${selectedConversation}-${Date.now()}`)
         .on(
           'postgres_changes',
           {
@@ -152,6 +155,8 @@ const Messages: React.FC = () => {
             filter: `group_id=eq.${selectedConversation}`
           },
           async (payload) => {
+            console.log('[Realtime] Received new message:', payload);
+            
             const newMsg = payload.new as {
               id: string;
               sender_id: string;
@@ -161,7 +166,10 @@ const Messages: React.FC = () => {
             };
             
             // Don't add if it's our own message (already added optimistically)
-            if (newMsg.sender_id === supabaseUser?.id) return;
+            if (newMsg.sender_id === supabaseUser?.id) {
+              console.log('[Realtime] Skipping own message');
+              return;
+            }
             
             // Fetch sender's name
             let senderName = 'Classmate';
@@ -175,9 +183,14 @@ const Messages: React.FC = () => {
               senderName = senderProfile.full_name;
             }
             
+            console.log('[Realtime] Adding message from:', senderName);
+            
             setMessages((prev) => {
               // Check if message already exists
-              if (prev.some(m => m.id === newMsg.id)) return prev;
+              if (prev.some(m => m.id === newMsg.id)) {
+                console.log('[Realtime] Message already exists, skipping');
+                return prev;
+              }
               return [...prev, {
                 id: newMsg.id,
                 sender_id: newMsg.sender_id,
@@ -188,7 +201,9 @@ const Messages: React.FC = () => {
             });
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log('[Realtime] Subscription status:', status);
+        });
       
       channelRef.current = channel;
     } else {
@@ -198,6 +213,7 @@ const Messages: React.FC = () => {
     // Cleanup subscription on unmount or conversation change
     return () => {
       if (channelRef.current) {
+        console.log('[Realtime] Cleaning up subscription');
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
