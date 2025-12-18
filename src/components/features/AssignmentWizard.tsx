@@ -33,6 +33,7 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 interface AssignmentWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onAssignmentCreated?: () => void;
 }
 
 type ExamBoard = 'AQA' | 'Edexcel' | 'OCR';
@@ -411,7 +412,7 @@ interface Classroom {
   subject: string;
 }
 
-const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange }) => {
+const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange, onAssignmentCreated }) => {
   const { user } = useSupabaseAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [examBoard, setExamBoard] = useState<ExamBoard | null>(null);
@@ -635,6 +636,7 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
       );
       onOpenChange(false);
       resetWizard();
+      onAssignmentCreated?.();
     } catch (error: any) {
       console.error('Error publishing assignment:', error);
       toast.error(error.message || 'Failed to publish assignment');
