@@ -14,6 +14,130 @@ export type Database = {
   }
   public: {
     Tables: {
+      assignment_submissions: {
+        Row: {
+          answers: Json
+          assignment_id: string
+          created_at: string
+          feedback: string | null
+          graded_at: string | null
+          graded_by: string | null
+          id: string
+          max_score: number | null
+          score: number | null
+          status: string
+          student_id: string
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          assignment_id: string
+          created_at?: string
+          feedback?: string | null
+          graded_at?: string | null
+          graded_by?: string | null
+          id?: string
+          max_score?: number | null
+          score?: number | null
+          status?: string
+          student_id: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          assignment_id?: string
+          created_at?: string
+          feedback?: string | null
+          graded_at?: string | null
+          graded_by?: string | null
+          id?: string
+          max_score?: number | null
+          score?: number | null
+          status?: string
+          student_id?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignment_submissions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assignments: {
+        Row: {
+          classroom_id: string
+          created_at: string
+          description: string | null
+          difficulty_distribution: Json | null
+          due_date: string | null
+          exam_board: string
+          id: string
+          question_count: number
+          questions: Json
+          status: string
+          subject: string
+          subtopics: string[] | null
+          teacher_id: string
+          title: string
+          topic: string
+          total_marks: number
+          updated_at: string
+        }
+        Insert: {
+          classroom_id: string
+          created_at?: string
+          description?: string | null
+          difficulty_distribution?: Json | null
+          due_date?: string | null
+          exam_board: string
+          id?: string
+          question_count?: number
+          questions?: Json
+          status?: string
+          subject: string
+          subtopics?: string[] | null
+          teacher_id: string
+          title: string
+          topic: string
+          total_marks?: number
+          updated_at?: string
+        }
+        Update: {
+          classroom_id?: string
+          created_at?: string
+          description?: string | null
+          difficulty_distribution?: Json | null
+          due_date?: string | null
+          exam_board?: string
+          id?: string
+          question_count?: number
+          questions?: Json
+          status?: string
+          subject?: string
+          subtopics?: string[] | null
+          teacher_id?: string
+          title?: string
+          topic?: string
+          total_marks?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignments_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       classroom_invitations: {
         Row: {
           classroom_id: string
@@ -588,6 +712,7 @@ export type Database = {
           user_type: Database["public"]["Enums"]["user_type"]
         }[]
       }
+      get_my_classroom_student_ids: { Args: never; Returns: string[] }
       get_user_ids_in_my_groups: { Args: never; Returns: string[] }
       has_role: {
         Args: {

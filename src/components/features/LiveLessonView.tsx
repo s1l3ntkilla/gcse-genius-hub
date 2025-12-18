@@ -118,6 +118,13 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
       setConnecting(true);
       
       try {
+        // Fetch existing participants FIRST (before we join)
+        const { data: existingParticipants } = await supabase
+          .from('live_lesson_participants')
+          .select('*')
+          .eq('lesson_id', lessonId)
+          .is('left_at', null);
+
         // Join as participant
         const { error: joinError } = await supabase
           .from('live_lesson_participants')
@@ -140,7 +147,7 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
 
         if (messagesData) setMessages(messagesData);
 
-        // Fetch participants
+        // Update participants state
         const { data: participantsData } = await supabase
           .from('live_lesson_participants')
           .select('*')
@@ -165,10 +172,13 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
           setLocalStream(stream);
           setMediaError(null);
           
-          // Connect to existing participants
-          if (participantsData) {
-            for (const participant of participantsData) {
+          // Connect to ALL existing participants (those who were there before us)
+          // This is critical - when student joins, they need to initiate connection to teacher
+          if (existingParticipants && existingParticipants.length > 0) {
+            console.log('[LiveLesson] Connecting to existing participants:', existingParticipants.length);
+            for (const participant of existingParticipants) {
               if (participant.user_id !== user.id) {
+                console.log('[LiveLesson] Initiating connection to:', participant.user_name);
                 await manager.connectToPeer(participant.user_id, participant.user_name);
               }
             }
