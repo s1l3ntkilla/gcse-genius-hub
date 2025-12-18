@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, MessageSquare, Hand, Video, ChevronLeft, ChevronRight, Users, FileText, BarChart3, ArrowRightLeft, Lock } from 'lucide-react';
+import { LayoutDashboard, BookOpen, MessageSquare, Hand, Video, Users, FileText, BarChart3, ArrowRightLeft, Lock, PanelLeftClose, PanelLeft } from 'lucide-react';
 import notedlyLogo from '@/assets/notedly-dark.png';
 import notedlyIcon from '@/assets/notedly-smaller.png';
 import { cn } from '@/lib/utils';
@@ -208,6 +208,32 @@ export const AppSidebar: React.FC<SidebarProps> = ({
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin">
+        {/* Collapse Toggle - Above navigation items */}
+        {collapsed ? (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                onClick={onToggle} 
+                className="w-full h-9 mb-2 justify-center px-0 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200"
+              >
+                <PanelLeft className="w-5 h-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="ml-2">
+              Expand
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <Button 
+            variant="ghost" 
+            onClick={onToggle} 
+            className="w-full h-9 mb-2 justify-start gap-3 px-3 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200"
+          >
+            <PanelLeftClose className="w-5 h-5" />
+            <span className="text-sm font-medium">Collapse</span>
+          </Button>
+        )}
         {navItems.map(item => {
         const isActive = location.pathname === item.path;
         const NavIcon = item.icon;
@@ -248,10 +274,5 @@ export const AppSidebar: React.FC<SidebarProps> = ({
             </div>}
         </div>
       </div>
-
-      {/* Collapse Toggle */}
-      <Button variant="ghost" size="icon" onClick={onToggle} className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-card border border-border shadow-md hover:bg-muted">
-        {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
-      </Button>
     </aside>;
 };
