@@ -2,8 +2,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
+import { SupabaseAuthProvider, useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import RevisionHub from "./pages/RevisionHub";
@@ -16,6 +17,43 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const RequireAuth: React.FC = () => {
+  const { isAuthenticated, loading } = useSupabaseAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace state={{ from: location }} />;
+  }
+
+  return <Outlet />;
+};
+
+const AppRoutes = () => (
+  <Routes>
+    <Route path="/auth" element={<Auth />} />
+
+    <Route element={<RequireAuth />}>
+      <Route path="/" element={<Index />} />
+      <Route path="/revision" element={<RevisionHub />} />
+      <Route path="/messages" element={<Messages />} />
+      <Route path="/qa" element={<ClassroomQA />} />
+      <Route path="/lessons" element={<Lessons />} />
+      <Route path="/assignments" element={<Assignments />} />
+      <Route path="/classes" element={<Index />} />
+      <Route path="/analytics" element={<Index />} />
+      <Route path="*" element={<NotFound />} />
+    </Route>
+  </Routes>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <SupabaseAuthProvider>
@@ -24,18 +62,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={<Index />} />
-              <Route path="/revision" element={<RevisionHub />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/qa" element={<ClassroomQA />} />
-              <Route path="/lessons" element={<Lessons />} />
-              <Route path="/assignments" element={<Assignments />} />
-              <Route path="/classes" element={<Index />} />
-              <Route path="/analytics" element={<Index />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AppRoutes />
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
