@@ -674,18 +674,20 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
               <>
                 <div className="space-y-2">
                   <Label>Main Topic</Label>
-                  <RadioGroup value={selectedTopic?.id || ''} onValueChange={(v) => {
-                    const topic = TOPICS_BY_BOARD[examBoard][subject].find(t => t.id === v);
-                    setSelectedTopic(topic || null);
-                    setSelectedSubtopics([]);
-                  }}>
-                    {TOPICS_BY_BOARD[examBoard][subject].map((topic) => (
-                      <div key={topic.id} className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors">
-                        <RadioGroupItem value={topic.id} id={topic.id} />
-                        <Label htmlFor={topic.id} className="flex-1 cursor-pointer">{topic.name}</Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
+                  <ScrollArea className="h-[200px] rounded-md border border-border p-2">
+                    <RadioGroup value={selectedTopic?.id || ''} onValueChange={(v) => {
+                      const topic = TOPICS_BY_BOARD[examBoard][subject].find(t => t.id === v);
+                      setSelectedTopic(topic || null);
+                      setSelectedSubtopics([]);
+                    }}>
+                      {TOPICS_BY_BOARD[examBoard][subject].map((topic) => (
+                        <div key={topic.id} className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors mb-2">
+                          <RadioGroupItem value={topic.id} id={topic.id} />
+                          <Label htmlFor={topic.id} className="flex-1 cursor-pointer">{topic.name}</Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </ScrollArea>
                 </div>
 
                 {selectedTopic && (
@@ -703,18 +705,20 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
 
                     <div className="space-y-2">
                       <Label>Select Subtopics</Label>
-                      <div className="space-y-2">
-                        {selectedTopic.subtopics.map((subtopic) => (
-                          <div key={subtopic.id} className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors">
-                            <Checkbox 
-                              id={subtopic.id}
-                              checked={selectedSubtopics.includes(subtopic.id)}
-                              onCheckedChange={() => handleSubtopicToggle(subtopic.id)}
-                            />
-                            <Label htmlFor={subtopic.id} className="flex-1 cursor-pointer">{subtopic.name}</Label>
-                          </div>
-                        ))}
-                      </div>
+                      <ScrollArea className="h-[150px] rounded-md border border-border p-2">
+                        <div className="space-y-2">
+                          {selectedTopic.subtopics.map((subtopic) => (
+                            <div key={subtopic.id} className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors">
+                              <Checkbox 
+                                id={subtopic.id}
+                                checked={selectedSubtopics.includes(subtopic.id)}
+                                onCheckedChange={() => handleSubtopicToggle(subtopic.id)}
+                              />
+                              <Label htmlFor={subtopic.id} className="flex-1 cursor-pointer">{subtopic.name}</Label>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
                     </div>
                   </>
                 )}
