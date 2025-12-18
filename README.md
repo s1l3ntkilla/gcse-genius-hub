@@ -5,11 +5,12 @@ WHAT AN INCREDIBLE PROJECT
 Done for Hulme Hackathon 2025
 
 Couldn't of done it without:
-Ayaan Hussain
-Daniel (LK) Chan
-Joshua Ogidi
-Cameron Goddard
-Jack Jolley
+
+- Ayaan Hussain
+- Daniel (LK) Chan
+- Joshua Ogidi
+- Cameron Goddard
+- Jack Jolley
 
 All amazing people and thank you.
 
