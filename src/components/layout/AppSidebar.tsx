@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, MessageSquare, Hand, Video, PanelLeftClose, PanelLeft, Users, FileText, BarChart3, ArrowRightLeft, Lock } from 'lucide-react';
+import { LayoutDashboard, BookOpen, MessageSquare, Hand, Video, PanelLeftClose, PanelLeft, Users, FileText, BarChart3, ArrowRightLeft, Lock, Headphones } from 'lucide-react';
 import notedlyLogo from '@/assets/notedly-dark.png';
 import notedlyIcon from '@/assets/notedly-smaller.png';
 import { cn } from '@/lib/utils';
@@ -159,7 +159,8 @@ const subjectColors: Record<string, string> = {
   'Messages': 'bg-warning',
   'Classroom': 'bg-destructive',
   'Lessons': 'bg-purple-500',
-  'Assignments': 'bg-cyan-500',
+  'Active Assistant': 'bg-cyan-500',
+  'Assignments': 'bg-orange-500',
   'My Classes': 'bg-success',
   'Student Questions': 'bg-destructive',
   'Analytics': 'bg-purple-500',
@@ -171,6 +172,7 @@ const studentNavItems = [
   { icon: MessageSquare, label: 'Messages', path: '/messages' },
   { icon: Hand, label: 'Classroom', path: '/qa' },
   { icon: Video, label: 'Lessons', path: '/lessons' },
+  { icon: Headphones, label: 'Active Assistant', path: '/active-assistant' },
   { icon: FileText, label: 'Assignments', path: '/assignments' },
 ];
 
