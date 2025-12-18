@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, Search, Hand } from 'lucide-react';
+import { Bell, Search, Hand, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -13,12 +13,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { sampleNotifications } from '@/data/sampleData';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { cn } from '@/lib/utils';
 import { QuickQuestionModal } from '../features/QuickQuestionModal';
+import { useNavigate } from 'react-router-dom';
 
 export const TopBar: React.FC = () => {
   const { role } = useAuth();
+  const { signOut, profile } = useSupabaseAuth();
+  const navigate = useNavigate();
   const [showQuestionModal, setShowQuestionModal] = useState(false);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/auth');
+  };
   const unreadCount = sampleNotifications.filter(n => !n.read).length;
 
   return (
@@ -97,6 +106,23 @@ export const TopBar: React.FC = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* User & Logout */}
+          <div className="flex items-center gap-2 pl-2 border-l border-border">
+            {profile && (
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                {profile.full_name || profile.email}
+              </span>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              title="Log out"
+            >
+              <LogOut className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </header>
 
