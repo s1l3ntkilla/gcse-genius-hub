@@ -14,6 +14,115 @@ export type Database = {
   }
   public: {
     Tables: {
+      classroom_invitations: {
+        Row: {
+          classroom_id: string
+          created_at: string
+          id: string
+          invited_by: string
+          message: string | null
+          responded_at: string | null
+          status: string
+          student_id: string
+        }
+        Insert: {
+          classroom_id: string
+          created_at?: string
+          id?: string
+          invited_by: string
+          message?: string | null
+          responded_at?: string | null
+          status?: string
+          student_id: string
+        }
+        Update: {
+          classroom_id?: string
+          created_at?: string
+          id?: string
+          invited_by?: string
+          message?: string | null
+          responded_at?: string | null
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classroom_invitations_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classroom_members: {
+        Row: {
+          classroom_id: string
+          created_at: string
+          id: string
+          joined_at: string | null
+          status: string
+          student_id: string
+        }
+        Insert: {
+          classroom_id: string
+          created_at?: string
+          id?: string
+          joined_at?: string | null
+          status?: string
+          student_id: string
+        }
+        Update: {
+          classroom_id?: string
+          created_at?: string
+          id?: string
+          joined_at?: string | null
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classroom_members_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classrooms: {
+        Row: {
+          class_code: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          subject: string
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_code?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          subject: string
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_code?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          subject?: string
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       group_chats: {
         Row: {
           created_at: string | null

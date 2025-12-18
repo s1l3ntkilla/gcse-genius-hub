@@ -4,40 +4,47 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Textarea } from '@/components/ui/textarea';
 import { 
   Video, 
-  Play, 
-  Pause, 
-  Clock, 
   Calendar,
-  FileText,
-  Mic,
-  MicOff,
-  VideoIcon,
-  VideoOff,
-  Users,
-  MessageSquare,
-  BookOpen,
-  ChevronRight,
-  Volume2,
-  Maximize2,
-  Settings
+  Play
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import StartLessonModal from '@/components/features/StartLessonModal';
+import LiveLessonView from '@/components/features/LiveLessonView';
+
+interface LessonData {
+  title: string;
+  classroomId: string;
+  classroomName: string;
+  description: string;
+}
 
 const Lessons: React.FC = () => {
   const { role } = useAuth();
-  const [notes, setNotes] = useState('');
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isVideoOn, setIsVideoOn] = useState(true);
+  const [startModalOpen, setStartModalOpen] = useState(false);
+  const [activeLessonData, setActiveLessonData] = useState<LessonData | null>(null);
 
-  // Empty state - no mock data
-  const scheduledLessons: any[] = [];
-  const recordedLessons: any[] = [];
+  const handleStartLesson = (lessonData: LessonData) => {
+    setActiveLessonData(lessonData);
+  };
+
+  const handleEndLesson = () => {
+    setActiveLessonData(null);
+  };
+
+  // If there's an active lesson, show the live lesson view
+  if (activeLessonData) {
+    return (
+      <MainLayout>
+        <LiveLessonView
+          lessonData={activeLessonData}
+          onEndLesson={handleEndLesson}
+          role={role as 'student' | 'teacher'}
+        />
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -54,9 +61,12 @@ const Lessons: React.FC = () => {
             </p>
           </div>
           {role === 'teacher' && (
-            <Button className="bg-primary hover:bg-primary-dark gap-2">
-              <Video className="w-4 h-4" />
-              Start New Lesson
+            <Button 
+              onClick={() => setStartModalOpen(true)} 
+              className="bg-primary hover:bg-primary-dark gap-2"
+            >
+              <Play className="w-4 h-4" />
+              Start Live Lesson
             </Button>
           )}
         </div>
@@ -82,8 +92,17 @@ const Lessons: React.FC = () => {
                 <p className="text-muted-foreground mt-1">
                   {role === 'student' 
                     ? 'Scheduled lessons will appear here'
-                    : 'Click "Start New Lesson" to schedule a lesson'}
+                    : 'Click "Start Live Lesson" to begin teaching'}
                 </p>
+                {role === 'teacher' && (
+                  <Button 
+                    onClick={() => setStartModalOpen(true)} 
+                    className="mt-4 gap-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    Start Live Lesson
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -101,6 +120,13 @@ const Lessons: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Start Lesson Modal */}
+      <StartLessonModal
+        open={startModalOpen}
+        onOpenChange={setStartModalOpen}
+        onStartLesson={handleStartLesson}
+      />
     </MainLayout>
   );
 };
