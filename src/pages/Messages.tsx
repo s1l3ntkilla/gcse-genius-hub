@@ -35,8 +35,8 @@ type GroupMessage = {
 };
 
 const Messages: React.FC = () => {
-  const { role } = useAuth();
-  const { user: supabaseUser } = useSupabaseAuth();
+  const { role, user } = useAuth();
+  const { user: supabaseUser, profile } = useSupabaseAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
@@ -45,6 +45,10 @@ const Messages: React.FC = () => {
   const [isLoadingClassrooms, setIsLoadingClassrooms] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  
+  // Get current user's display name and initials
+  const myName = profile?.full_name || user?.name || 'You';
+  const myInitials = myName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'ME';
 
   const filteredClassrooms = useMemo(() => {
     if (!searchQuery.trim()) return classrooms;
@@ -148,7 +152,7 @@ const Messages: React.FC = () => {
       ...prev,
       {
         ...data!,
-        sender_name: 'You'
+        sender_name: myName
       }
     ]));
     setNewMessage('');
@@ -248,39 +252,53 @@ const Messages: React.FC = () => {
                       <p className="text-xs mt-1">Start the conversation with your class</p>
                     </div>
                   ) : (
-                    messages.map((msg) => (
+                    messages.map((msg) => {
+                    const isMe = msg.sender_id === supabaseUser?.id;
+                    const senderName = isMe ? myName : (msg.sender_name || 'Classmate');
+                    const senderInitials = senderName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '??';
+                    
+                    return (
                       <div
                         key={msg.id}
                         className={cn(
-                          'flex items-start gap-3',
-                          msg.sender_id === supabaseUser?.id ? 'justify-end' : 'justify-start'
+                          'flex items-end gap-3',
+                          isMe ? 'justify-end' : 'justify-start'
                         )}
                       >
-                        {msg.sender_id !== supabaseUser?.id && (
-                          <Avatar className="w-9 h-9">
-                            <AvatarFallback>{(msg.sender_name || 'M')[0]}</AvatarFallback>
+                        {!isMe && (
+                          <Avatar className="w-8 h-8">
+                            <AvatarFallback className="text-xs bg-muted-foreground/20">
+                              {senderInitials}
+                            </AvatarFallback>
                           </Avatar>
                         )}
-                        <div
-                          className={cn(
-                            'rounded-2xl px-4 py-3 max-w-xl shadow-sm',
-                            msg.sender_id === supabaseUser?.id
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted'
+                        <div className="flex flex-col gap-1 max-w-md">
+                          {!isMe && (
+                            <span className="text-xs text-muted-foreground ml-1">
+                              {senderName}
+                            </span>
                           )}
-                        >
-                          <p className="text-sm font-semibold mb-1">
-                            {msg.sender_id === supabaseUser?.id ? 'You' : msg.sender_name || 'Classmate'}
-                          </p>
-                          <p className="text-sm whitespace-pre-wrap">{msg.message_content}</p>
+                          <div
+                            className={cn(
+                              'rounded-2xl px-4 py-2.5',
+                              isMe
+                                ? 'bg-primary text-primary-foreground rounded-br-md'
+                                : 'bg-muted rounded-bl-md'
+                            )}
+                          >
+                            <p className="text-sm whitespace-pre-wrap">{msg.message_content}</p>
+                          </div>
                         </div>
-                        {msg.sender_id === supabaseUser?.id && (
-                          <Avatar className="w-9 h-9">
-                            <AvatarFallback>You</AvatarFallback>
+                        {isMe && (
+                          <Avatar className="w-8 h-8">
+                            <AvatarFallback className="text-xs bg-primary/20 text-primary">
+                              {myInitials}
+                            </AvatarFallback>
                           </Avatar>
                         )}
                       </div>
-                    ))
+                    );
+                  })
                   )}
                 </div>
               </ScrollArea>
