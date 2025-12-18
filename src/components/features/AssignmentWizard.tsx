@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   ChevronRight, 
   ChevronLeft, 
@@ -21,10 +22,13 @@ import {
   Sparkles,
   FileCheck,
   Send,
-  CheckCircle2
+  CheckCircle2,
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 
 interface AssignmentWizardProps {
   open: boolean;
@@ -401,7 +405,14 @@ interface GeneratedQuestion {
   markScheme: string;
 }
 
+interface Classroom {
+  id: string;
+  name: string;
+  subject: string;
+}
+
 const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange }) => {
+  const { user } = useSupabaseAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [examBoard, setExamBoard] = useState<ExamBoard | null>(null);
   const [subject, setSubject] = useState<Subject | null>(null);
@@ -414,7 +425,35 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
   const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedQuestion[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [assignmentName, setAssignmentName] = useState('');
-  const [className, setClassName] = useState('');
+  const [selectedClassroomId, setSelectedClassroomId] = useState<string>('');
+  const [classrooms, setClassrooms] = useState<Classroom[]>([]);
+  const [isLoadingClassrooms, setIsLoadingClassrooms] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+
+  // Fetch teacher's classrooms when dialog opens
+  useEffect(() => {
+    const fetchClassrooms = async () => {
+      if (!user || !open) return;
+      
+      setIsLoadingClassrooms(true);
+      try {
+        const { data, error } = await supabase
+          .from('classrooms')
+          .select('id, name, subject')
+          .eq('teacher_id', user.id);
+        
+        if (error) throw error;
+        setClassrooms(data || []);
+      } catch (error) {
+        console.error('Error fetching classrooms:', error);
+        toast.error('Failed to load your classes');
+      } finally {
+        setIsLoadingClassrooms(false);
+      }
+    };
+
+    fetchClassrooms();
+  }, [user, open]);
 
   const progress = (currentStep / STEPS.length) * 100;
 
@@ -563,13 +602,45 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
     return points.join('\n');
   };
 
-  const handlePublish = () => {
-    toast.success(
-      `🌟 Success! Assignment "${assignmentName}" has been published to ${className}. It is now visible on the student platform.`,
-      { duration: 5000 }
-    );
-    onOpenChange(false);
-    resetWizard();
+  const handlePublish = async () => {
+    if (!user || !selectedClassroomId || !examBoard || !subject || !selectedTopic) {
+      toast.error('Missing required fields');
+      return;
+    }
+
+    setIsPublishing(true);
+    try {
+      const { error } = await supabase.from('assignments' as any).insert({
+        classroom_id: selectedClassroomId,
+        teacher_id: user.id,
+        title: assignmentName,
+        description: `${examBoard} ${subject} - ${selectedTopic.name}`,
+        exam_board: examBoard,
+        subject: subject,
+        topic: selectedTopic.name,
+        subtopics: selectedSubtopics,
+        questions: generatedQuestions as any,
+        total_marks: generatedQuestions.reduce((sum, q) => sum + q.marks, 0),
+        question_count: generatedQuestions.length,
+        difficulty_distribution: difficultyDistribution as any,
+        status: 'published'
+      } as any);
+
+      if (error) throw error;
+
+      const selectedClassroom = classrooms.find(c => c.id === selectedClassroomId);
+      toast.success(
+        `Assignment "${assignmentName}" published to ${selectedClassroom?.name || 'class'}!`,
+        { duration: 5000 }
+      );
+      onOpenChange(false);
+      resetWizard();
+    } catch (error: any) {
+      console.error('Error publishing assignment:', error);
+      toast.error(error.message || 'Failed to publish assignment');
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
   const resetWizard = () => {
@@ -584,7 +655,7 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
     setDifficultyDistribution({});
     setGeneratedQuestions([]);
     setAssignmentName('');
-    setClassName('');
+    setSelectedClassroomId('');
   };
 
   const canProceed = (): boolean => {
@@ -595,7 +666,7 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
       case 4: return questionCount > 0 && totalMarks > 0;
       case 5: return Object.keys(difficultyDistribution).length > 0;
       case 6: return generatedQuestions.length > 0;
-      case 7: return !!assignmentName && !!className;
+      case 7: return !!assignmentName && !!selectedClassroomId;
       default: return true;
     }
   };
@@ -905,19 +976,37 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="className">Class Name / ID</Label>
-                <Input 
-                  id="className"
-                  placeholder="e.g., 10A Science"
-                  value={className}
-                  onChange={(e) => setClassName(e.target.value)}
-                />
+                <Label>Assign to Class</Label>
+                {isLoadingClassrooms ? (
+                  <div className="text-sm text-muted-foreground p-3 border rounded-md">Loading your classes...</div>
+                ) : classrooms.length === 0 ? (
+                  <div className="text-sm text-warning p-3 border border-warning/30 rounded-md bg-warning/10">
+                    No classes found. Please create a class first in "My Classes".
+                  </div>
+                ) : (
+                  <Select value={selectedClassroomId} onValueChange={setSelectedClassroomId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a class" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {classrooms.map((classroom) => (
+                        <SelectItem key={classroom.id} value={classroom.id}>
+                          <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            {classroom.name} ({classroom.subject})
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
           </div>
         );
 
       case 8:
+        const selectedClassroom = classrooms.find(c => c.id === selectedClassroomId);
         return (
           <div className="flex flex-col items-center justify-center py-8 space-y-6 text-center">
             <div className="w-20 h-20 rounded-full bg-success/20 flex items-center justify-center">
@@ -929,16 +1018,16 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
                 Assignment: <span className="font-medium text-foreground">{assignmentName}</span>
               </p>
               <p className="text-muted-foreground">
-                Class: <span className="font-medium text-foreground">{className}</span>
+                Class: <span className="font-medium text-foreground">{selectedClassroom?.name || 'Unknown'}</span>
               </p>
               <p className="text-muted-foreground">
                 Questions: <span className="font-medium text-foreground">{generatedQuestions.length}</span> | 
                 Total Marks: <span className="font-medium text-foreground">{generatedQuestions.reduce((sum, q) => sum + q.marks, 0)}</span>
               </p>
             </div>
-            <Button onClick={handlePublish} className="gap-2 bg-success hover:bg-success/90">
+            <Button onClick={handlePublish} disabled={isPublishing} className="gap-2 bg-success hover:bg-success/90">
               <Send className="w-4 h-4" />
-              Publish Assignment
+              {isPublishing ? 'Publishing...' : 'Publish Assignment'}
             </Button>
           </div>
         );
