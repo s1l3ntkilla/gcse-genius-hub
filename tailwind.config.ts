@@ -15,7 +15,7 @@ export default {
   	extend: {
   		fontFamily: {
   			sans: [
-  				'Roboto',
+  				'Outfit',
   				'ui-sans-serif',
   				'system-ui',
   				'sans-serif',
