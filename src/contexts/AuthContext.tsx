@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { User, UserRole, Subject } from '@/types';
 import { useSupabaseAuth } from './SupabaseAuthContext';
 
@@ -8,34 +8,30 @@ interface AuthContextType {
   role: UserRole;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  switchRole: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { profile, isAuthenticated, signOut, loading } = useSupabaseAuth();
-  const [role, setRole] = useState<UserRole>('student');
-  const [user, setUser] = useState<User | null>(null);
+  const { profile, isAuthenticated, signOut } = useSupabaseAuth();
 
-  // Sync user data from Supabase profile - automatically set teacher mode for teachers on login
-  useEffect(() => {
-    if (profile) {
-      const isTeacher = profile.user_type === 'teacher';
-      const mappedUser: User = {
-        id: profile.id,
-        name: profile.full_name || profile.email,
-        email: profile.email,
-        role: isTeacher ? 'teacher' : 'student',
-        avatar: profile.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || profile.email[0].toUpperCase(),
-        subjects: (profile.subjects || []) as Subject[],
-      };
-      setUser(mappedUser);
-      // Automatically set teacher mode for registered teachers on login
-      setRole(isTeacher ? 'teacher' : 'student');
-    } else {
-      setUser(null);
+  // Derive user and role directly from profile - single source of truth
+  const { user, role } = useMemo(() => {
+    if (!profile) {
+      return { user: null, role: 'student' as UserRole };
     }
+
+    const userType = profile.user_type || 'student';
+    const mappedUser: User = {
+      id: profile.id,
+      name: profile.full_name || profile.email,
+      email: profile.email,
+      role: userType as UserRole,
+      avatar: profile.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || profile.email[0].toUpperCase(),
+      subjects: (profile.subjects || []) as Subject[],
+    };
+
+    return { user: mappedUser, role: userType as UserRole };
   }, [profile]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -45,23 +41,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     await signOut();
-    setUser(null);
-    setRole('student');
-  };
-
-  const switchRole = () => {
-    // For demo/testing - toggle between student and teacher views
-    if (role === 'student') {
-      setRole('teacher');
-      if (user) setUser({ ...user, role: 'teacher' });
-    } else {
-      setRole('student');
-      if (user) setUser({ ...user, role: 'student' });
-    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, role, login, logout, switchRole }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, role, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
