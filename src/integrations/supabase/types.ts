@@ -213,6 +213,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_group_member_profiles: {
+        Args: { _group_id: string }
+        Returns: {
+          full_name: string
+          id: string
+          profile_picture_url: string
+          subjects: string[]
+          user_type: Database["public"]["Enums"]["user_type"]
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
