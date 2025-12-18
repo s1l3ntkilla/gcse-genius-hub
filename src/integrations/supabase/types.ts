@@ -176,6 +176,51 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_specifications: {
+        Row: {
+          created_at: string
+          exam_board: string
+          id: string
+          key_terms: string[] | null
+          qualification: string
+          subject: string
+          subtopic_id: string
+          subtopic_name: string
+          tier: string | null
+          topic_id: string
+          topic_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          exam_board: string
+          id?: string
+          key_terms?: string[] | null
+          qualification?: string
+          subject: string
+          subtopic_id: string
+          subtopic_name: string
+          tier?: string | null
+          topic_id: string
+          topic_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          exam_board?: string
+          id?: string
+          key_terms?: string[] | null
+          qualification?: string
+          subject?: string
+          subtopic_id?: string
+          subtopic_name?: string
+          tier?: string | null
+          topic_id?: string
+          topic_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       group_chats: {
         Row: {
           created_at: string | null
@@ -563,10 +608,9 @@ export type Database = {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
-      is_group_member: {
-        Args: { _group_id: string; _user_id: string }
-        Returns: boolean
-      }
+      is_group_member:
+        | { Args: { _group_id: string; _user_id: string }; Returns: boolean }
+        | { Args: { check_group_id: string }; Returns: boolean }
       is_teacher: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {

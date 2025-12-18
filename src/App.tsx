@@ -15,6 +15,7 @@ import Assignments from "./pages/Assignments";
 import MyClasses from "./pages/MyClasses";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
+import ActiveAssistant from "./pages/ActiveAssistant";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -82,6 +83,7 @@ const AppRoutes = () => (
       <Route path="/qa" element={<ClassroomQA />} />
       <Route path="/lessons" element={<Lessons />} />
       <Route path="/assignments" element={<Assignments />} />
+      <Route path="/active-assistant" element={<ActiveAssistant />} />
       <Route path="/classes" element={<MyClasses />} />
       <Route path="/analytics" element={<Index />} />
       <Route path="*" element={<NotFound />} />

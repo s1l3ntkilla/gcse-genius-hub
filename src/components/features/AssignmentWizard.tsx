@@ -32,7 +32,7 @@ interface AssignmentWizardProps {
 }
 
 type ExamBoard = 'AQA' | 'Edexcel' | 'OCR';
-type Subject = 'Chemistry' | 'Biology' | 'Maths';
+type Subject = 'Chemistry' | 'Biology' | 'Physics' | 'Maths';
 
 interface Topic {
   id: string;
@@ -63,6 +63,36 @@ const TOPICS_BY_BOARD: Record<ExamBoard, Record<Subject, Topic[]>> = {
         { id: 'c4-2', name: 'Extraction of metals' },
         { id: 'c4-3', name: 'Acids and alkalis' }
       ]},
+      { id: 'c5', name: 'Energy Changes', subtopics: [
+        { id: 'c5-1', name: 'Exothermic and endothermic reactions' },
+        { id: 'c5-2', name: 'Reaction profiles' },
+        { id: 'c5-3', name: 'Bond energies' }
+      ]},
+      { id: 'c6', name: 'Rates & Equilibrium', subtopics: [
+        { id: 'c6-1', name: 'Rate of reaction' },
+        { id: 'c6-2', name: 'Collision theory' },
+        { id: 'c6-3', name: 'Reversible reactions' }
+      ]},
+      { id: 'c7', name: 'Organic Chemistry', subtopics: [
+        { id: 'c7-1', name: 'Crude oil and fuels' },
+        { id: 'c7-2', name: 'Alkanes and alkenes' },
+        { id: 'c7-3', name: 'Alcohols and carboxylic acids' }
+      ]},
+      { id: 'c8', name: 'Chemical Analysis', subtopics: [
+        { id: 'c8-1', name: 'Purity and formulations' },
+        { id: 'c8-2', name: 'Chromatography' },
+        { id: 'c8-3', name: 'Test for gases and ions' }
+      ]},
+      { id: 'c9', name: 'Chemistry of the Atmosphere', subtopics: [
+        { id: 'c9-1', name: 'Evolution of the atmosphere' },
+        { id: 'c9-2', name: 'Greenhouse gases' },
+        { id: 'c9-3', name: 'Carbon footprint' }
+      ]},
+      { id: 'c10', name: 'Using Resources', subtopics: [
+        { id: 'c10-1', name: 'Earth\'s resources' },
+        { id: 'c10-2', name: 'Potable water' },
+        { id: 'c10-3', name: 'Life cycle assessment' }
+      ]},
     ],
     Biology: [
       { id: 'b1', name: 'Cell Biology', subtopics: [
@@ -79,6 +109,63 @@ const TOPICS_BY_BOARD: Record<ExamBoard, Record<Subject, Topic[]>> = {
         { id: 'b3-1', name: 'Communicable diseases' },
         { id: 'b3-2', name: 'Human defence systems' },
         { id: 'b3-3', name: 'Vaccination' }
+      ]},
+      { id: 'b4', name: 'Bioenergetics', subtopics: [
+        { id: 'b4-1', name: 'Photosynthesis' },
+        { id: 'b4-2', name: 'Respiration' },
+        { id: 'b4-3', name: 'Metabolism' }
+      ]},
+      { id: 'b5', name: 'Homeostasis & Response', subtopics: [
+        { id: 'b5-1', name: 'Nervous system' },
+        { id: 'b5-2', name: 'Endocrine system' },
+        { id: 'b5-3', name: 'Blood glucose control' }
+      ]},
+      { id: 'b6', name: 'Inheritance & Evolution', subtopics: [
+        { id: 'b6-1', name: 'Reproduction' },
+        { id: 'b6-2', name: 'Variation and evolution' },
+        { id: 'b6-3', name: 'Genetics and inheritance' }
+      ]},
+      { id: 'b7', name: 'Ecology', subtopics: [
+        { id: 'b7-1', name: 'Adaptations and communities' },
+        { id: 'b7-2', name: 'Organisation of ecosystems' },
+        { id: 'b7-3', name: 'Biodiversity' }
+      ]},
+    ],
+    Physics: [
+      { id: 'p1', name: 'Energy', subtopics: [
+        { id: 'p1-1', name: 'Energy stores and transfers' },
+        { id: 'p1-2', name: 'Conservation of energy' },
+        { id: 'p1-3', name: 'Energy resources' }
+      ]},
+      { id: 'p2', name: 'Electricity', subtopics: [
+        { id: 'p2-1', name: 'Current and circuits' },
+        { id: 'p2-2', name: 'Series and parallel' },
+        { id: 'p2-3', name: 'Domestic electricity' }
+      ]},
+      { id: 'p3', name: 'Particle Model', subtopics: [
+        { id: 'p3-1', name: 'Density' },
+        { id: 'p3-2', name: 'States of matter' },
+        { id: 'p3-3', name: 'Specific heat capacity' }
+      ]},
+      { id: 'p4', name: 'Atomic Structure', subtopics: [
+        { id: 'p4-1', name: 'Atomic structure' },
+        { id: 'p4-2', name: 'Radioactive decay' },
+        { id: 'p4-3', name: 'Nuclear radiation' }
+      ]},
+      { id: 'p5', name: 'Forces', subtopics: [
+        { id: 'p5-1', name: 'Forces and motion' },
+        { id: 'p5-2', name: 'Newton\'s laws' },
+        { id: 'p5-3', name: 'Momentum' }
+      ]},
+      { id: 'p6', name: 'Waves', subtopics: [
+        { id: 'p6-1', name: 'Wave properties' },
+        { id: 'p6-2', name: 'Electromagnetic spectrum' },
+        { id: 'p6-3', name: 'Light and sound' }
+      ]},
+      { id: 'p7', name: 'Magnetism', subtopics: [
+        { id: 'p7-1', name: 'Permanent and induced magnets' },
+        { id: 'p7-2', name: 'Electromagnets' },
+        { id: 'p7-3', name: 'Motor effect' }
       ]},
     ],
     Maths: [
@@ -104,21 +191,82 @@ const TOPICS_BY_BOARD: Record<ExamBoard, Record<Subject, Topic[]>> = {
       { id: 'c1', name: 'Key Concepts', subtopics: [
         { id: 'c1-1', name: 'Atomic structure' },
         { id: 'c1-2', name: 'The periodic table' },
-        { id: 'c1-3', name: 'Ionic bonding' }
+        { id: 'c1-3', name: 'Ionic bonding' },
+        { id: 'c1-4', name: 'Covalent bonding' }
       ]},
       { id: 'c2', name: 'States of Matter', subtopics: [
         { id: 'c2-1', name: 'States of matter' },
-        { id: 'c2-2', name: 'Methods of separating mixtures' }
+        { id: 'c2-2', name: 'Methods of separating mixtures' },
+        { id: 'c2-3', name: 'Acids and bases' }
+      ]},
+      { id: 'c3', name: 'Chemical Changes', subtopics: [
+        { id: 'c3-1', name: 'Reactivity series' },
+        { id: 'c3-2', name: 'Electrolysis' },
+        { id: 'c3-3', name: 'Energy changes' }
+      ]},
+      { id: 'c4', name: 'Extracting & Using', subtopics: [
+        { id: 'c4-1', name: 'Extracting metals' },
+        { id: 'c4-2', name: 'Life cycle assessments' },
+        { id: 'c4-3', name: 'Recycling' }
+      ]},
+      { id: 'c5', name: 'Separate Chemistry', subtopics: [
+        { id: 'c5-1', name: 'Transition metals' },
+        { id: 'c5-2', name: 'Quantitative analysis' },
+        { id: 'c5-3', name: 'Chemical cells' }
       ]},
     ],
     Biology: [
       { id: 'b1', name: 'Key Concepts', subtopics: [
         { id: 'b1-1', name: 'Cells and microscopy' },
-        { id: 'b1-2', name: 'DNA and protein synthesis' }
+        { id: 'b1-2', name: 'DNA and protein synthesis' },
+        { id: 'b1-3', name: 'Enzyme action' }
       ]},
       { id: 'b2', name: 'Cells and Control', subtopics: [
         { id: 'b2-1', name: 'Mitosis and cell cycle' },
-        { id: 'b2-2', name: 'Stem cells' }
+        { id: 'b2-2', name: 'Stem cells' },
+        { id: 'b2-3', name: 'Nervous system' }
+      ]},
+      { id: 'b3', name: 'Genetics', subtopics: [
+        { id: 'b3-1', name: 'Meiosis' },
+        { id: 'b3-2', name: 'DNA structure' },
+        { id: 'b3-3', name: 'Protein synthesis' }
+      ]},
+      { id: 'b4', name: 'Natural Selection', subtopics: [
+        { id: 'b4-1', name: 'Evidence for evolution' },
+        { id: 'b4-2', name: 'Darwin\'s theory' },
+        { id: 'b4-3', name: 'Selective breeding' }
+      ]},
+      { id: 'b5', name: 'Health & Disease', subtopics: [
+        { id: 'b5-1', name: 'Health and disease' },
+        { id: 'b5-2', name: 'Pathogens' },
+        { id: 'b5-3', name: 'Human defence' }
+      ]},
+    ],
+    Physics: [
+      { id: 'p1', name: 'Key Concepts', subtopics: [
+        { id: 'p1-1', name: 'Motion' },
+        { id: 'p1-2', name: 'Forces' },
+        { id: 'p1-3', name: 'Conservation of energy' }
+      ]},
+      { id: 'p2', name: 'Motion & Forces', subtopics: [
+        { id: 'p2-1', name: 'Newton\'s laws' },
+        { id: 'p2-2', name: 'Momentum' },
+        { id: 'p2-3', name: 'Stopping distances' }
+      ]},
+      { id: 'p3', name: 'Conservation of Energy', subtopics: [
+        { id: 'p3-1', name: 'Energy stores' },
+        { id: 'p3-2', name: 'Energy transfers' },
+        { id: 'p3-3', name: 'Power and efficiency' }
+      ]},
+      { id: 'p4', name: 'Waves', subtopics: [
+        { id: 'p4-1', name: 'Wave properties' },
+        { id: 'p4-2', name: 'EM spectrum' },
+        { id: 'p4-3', name: 'Wave applications' }
+      ]},
+      { id: 'p5', name: 'Electricity', subtopics: [
+        { id: 'p5-1', name: 'Static electricity' },
+        { id: 'p5-2', name: 'Current and circuits' },
+        { id: 'p5-3', name: 'Power and energy' }
       ]},
     ],
     Maths: [
@@ -134,23 +282,89 @@ const TOPICS_BY_BOARD: Record<ExamBoard, Record<Subject, Topic[]>> = {
   },
   OCR: {
     Chemistry: [
-      { id: 'c1', name: 'Particles', subtopics: [
-        { id: 'c1-1', name: 'Atomic structure' },
-        { id: 'c1-2', name: 'Elements and compounds' }
+      { id: 'c1', name: 'C1: Particles', subtopics: [
+        { id: 'c1.1', name: 'The particle model' },
+        { id: 'c1.2', name: 'Atomic structure' }
       ]},
-      { id: 'c2', name: 'Elements and Compounds', subtopics: [
-        { id: 'c2-1', name: 'The periodic table' },
-        { id: 'c2-2', name: 'Types of bonding' }
+      { id: 'c2', name: 'C2: Elements, compounds and mixtures', subtopics: [
+        { id: 'c2.1', name: 'Purity and separating mixtures' },
+        { id: 'c2.2', name: 'Bonding' },
+        { id: 'c2.3', name: 'Properties of materials' }
+      ]},
+      { id: 'c3', name: 'C3: Chemical reactions', subtopics: [
+        { id: 'c3.1', name: 'Introducing chemical reactions' },
+        { id: 'c3.2', name: 'Energetics' },
+        { id: 'c3.3', name: 'Types of chemical reactions' },
+        { id: 'c3.4', name: 'Electrolysis' }
+      ]},
+      { id: 'c4', name: 'C4: Predicting and identifying reactions', subtopics: [
+        { id: 'c4.1', name: 'Predicting chemical reactions' }
+      ]},
+      { id: 'c5', name: 'C5: Monitoring and controlling reactions', subtopics: [
+        { id: 'c5.1', name: 'Controlling reactions' },
+        { id: 'c5.2', name: 'Equilibria' }
+      ]},
+      { id: 'c6', name: 'C6: Global challenges', subtopics: [
+        { id: 'c6.1', name: 'Improving processes and products' },
+        { id: 'c6.2', name: 'Interpreting and interacting with Earth systems' }
       ]},
     ],
     Biology: [
-      { id: 'b1', name: 'Cell Level Systems', subtopics: [
-        { id: 'b1-1', name: 'Cell structures' },
-        { id: 'b1-2', name: 'What happens in cells' }
+      { id: 'b1', name: 'B1: Cell level systems', subtopics: [
+        { id: 'b1.1', name: 'Cell structures' },
+        { id: 'b1.2', name: 'What happens in cells' },
+        { id: 'b1.3', name: 'Respiration' },
+        { id: 'b1.4', name: 'Photosynthesis' }
       ]},
-      { id: 'b2', name: 'Scaling Up', subtopics: [
-        { id: 'b2-1', name: 'Supplying cells' },
-        { id: 'b2-2', name: 'The challenges of size' }
+      { id: 'b2', name: 'B2: Scaling up', subtopics: [
+        { id: 'b2.1', name: 'Supplying the cell' },
+        { id: 'b2.2', name: 'The challenges of size' }
+      ]},
+      { id: 'b3', name: 'B3: Organism level systems', subtopics: [
+        { id: 'b3.1', name: 'Coordination and control – nervous system' },
+        { id: 'b3.2', name: 'Coordination and control – endocrine system' },
+        { id: 'b3.3', name: 'Maintaining internal environments' }
+      ]},
+      { id: 'b4', name: 'B4: Community level systems', subtopics: [
+        { id: 'b4.1', name: 'Ecosystems' }
+      ]},
+      { id: 'b5', name: 'B5: Genes, inheritance and selection', subtopics: [
+        { id: 'b5.1', name: 'Inheritance' },
+        { id: 'b5.2', name: 'Natural selection and evolution' }
+      ]},
+      { id: 'b6', name: 'B6: Global challenges', subtopics: [
+        { id: 'b6.1', name: 'Monitoring and maintaining the environment' },
+        { id: 'b6.2', name: 'Feeding the human race' },
+        { id: 'b6.3', name: 'Monitoring and maintaining health' }
+      ]},
+    ],
+    Physics: [
+      { id: 'p1', name: 'P1: Matter', subtopics: [
+        { id: 'p1.1', name: 'The particle model' },
+        { id: 'p1.2', name: 'Changes of state' }
+      ]},
+      { id: 'p2', name: 'P2: Forces', subtopics: [
+        { id: 'p2.1', name: 'Motion' },
+        { id: 'p2.2', name: 'Newton\'s laws' },
+        { id: 'p2.3', name: 'Forces in action' }
+      ]},
+      { id: 'p3', name: 'P3: Electricity and magnetism', subtopics: [
+        { id: 'p3.1', name: 'Static and Charge' },
+        { id: 'p3.2', name: 'Simple circuits' },
+        { id: 'p3.3', name: 'Magnets and magnetic fields' }
+      ]},
+      { id: 'p4', name: 'P4: Waves and radioactivity', subtopics: [
+        { id: 'p4.1', name: 'Wave behaviour' },
+        { id: 'p4.2', name: 'The electromagnetic spectrum' },
+        { id: 'p4.3', name: 'Radioactivity' }
+      ]},
+      { id: 'p5', name: 'P5: Energy', subtopics: [
+        { id: 'p5.1', name: 'Work done' },
+        { id: 'p5.2', name: 'Power and efficiency' }
+      ]},
+      { id: 'p6', name: 'P6: Global challenges', subtopics: [
+        { id: 'p6.1', name: 'Physics on the move' },
+        { id: 'p6.2', name: 'Powering Earth' }
       ]},
     ],
     Maths: [
@@ -435,7 +649,7 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
           <div className="space-y-4">
             <p className="text-muted-foreground">Select the subject for this assignment:</p>
             <RadioGroup value={subject || ''} onValueChange={(v) => setSubject(v as Subject)}>
-              {(['Chemistry', 'Biology', 'Maths'] as Subject[]).map((subj) => (
+              {(['Chemistry', 'Biology', 'Physics', 'Maths'] as Subject[]).map((subj) => (
                 <div key={subj} className="flex items-center space-x-3 p-4 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors">
                   <RadioGroupItem value={subj} id={subj} />
                   <Label htmlFor={subj} className="flex-1 cursor-pointer font-medium">GCSE {subj}</Label>
