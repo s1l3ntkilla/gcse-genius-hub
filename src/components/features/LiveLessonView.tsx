@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,12 +17,14 @@ import {
   PhoneOff,
   Settings,
   Send,
-  Loader2
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { toast } from 'sonner';
+import { WebRTCManager } from '@/utils/WebRTCManager';
 
 interface LiveLessonViewProps {
   lessonId: string;
@@ -53,6 +55,12 @@ interface Participant {
   joined_at: string;
 }
 
+interface RemoteStream {
+  peerId: string;
+  peerName: string;
+  stream: MediaStream;
+}
+
 const LiveLessonView: React.FC<LiveLessonViewProps> = ({
   lessonId,
   lessonData,
@@ -70,16 +78,45 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [remoteStreams, setRemoteStreams] = useState<RemoteStream[]>([]);
+  const [connecting, setConnecting] = useState(true);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const webrtcManagerRef = useRef<WebRTCManager | null>(null);
 
   const userName = profile?.full_name || user?.email?.split('@')[0] || 'User';
 
-  // Initial data fetch
+  // Handle remote stream callback
+  const handleRemoteStream = useCallback((peerId: string, peerName: string, stream: MediaStream | null) => {
+    console.log('[LiveLesson] Remote stream received from:', peerName);
+    if (stream) {
+      setRemoteStreams(prev => {
+        const existing = prev.find(s => s.peerId === peerId);
+        if (existing) {
+          return prev.map(s => s.peerId === peerId ? { ...s, stream } : s);
+        }
+        return [...prev, { peerId, peerName, stream }];
+      });
+    }
+  }, []);
+
+  // Handle peer disconnection
+  const handlePeerDisconnected = useCallback((peerId: string) => {
+    console.log('[LiveLesson] Peer disconnected:', peerId);
+    setRemoteStreams(prev => prev.filter(s => s.peerId !== peerId));
+  }, []);
+
+  // Initialize WebRTC and data
   useEffect(() => {
     if (!lessonId || !user) return;
 
-    const fetchData = async () => {
+    const initializeLesson = async () => {
       setLoading(true);
+      setConnecting(true);
+      
       try {
         // Join as participant
         const { error: joinError } = await supabase
@@ -111,19 +148,60 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
           .is('left_at', null);
 
         if (participantsData) setParticipants(participantsData);
+
+        // Initialize WebRTC
+        const manager = new WebRTCManager(
+          lessonId,
+          user.id,
+          userName,
+          handleRemoteStream,
+          handlePeerDisconnected
+        );
+        
+        webrtcManagerRef.current = manager;
+        
+        const stream = await manager.initialize();
+        if (stream) {
+          setLocalStream(stream);
+          setMediaError(null);
+          
+          // Connect to existing participants
+          if (participantsData) {
+            for (const participant of participantsData) {
+              if (participant.user_id !== user.id) {
+                await manager.connectToPeer(participant.user_id, participant.user_name);
+              }
+            }
+          }
+        } else {
+          setMediaError('Could not access camera/microphone. Please check permissions.');
+        }
       } catch (error) {
-        console.error('Error fetching lesson data:', error);
+        console.error('Error initializing lesson:', error);
+        setMediaError('Failed to initialize video call');
       } finally {
         setLoading(false);
+        setConnecting(false);
       }
     };
 
-    fetchData();
-  }, [lessonId, user, userName, role]);
+    initializeLesson();
+
+    return () => {
+      webrtcManagerRef.current?.cleanup();
+    };
+  }, [lessonId, user, userName, role, handleRemoteStream, handlePeerDisconnected]);
+
+  // Set local video element
+  useEffect(() => {
+    if (localVideoRef.current && localStream) {
+      localVideoRef.current.srcObject = localStream;
+    }
+  }, [localStream]);
 
   // Real-time subscriptions
   useEffect(() => {
-    if (!lessonId) return;
+    if (!lessonId || !user) return;
 
     // Subscribe to new messages
     const messagesChannel = supabase
@@ -137,7 +215,6 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
           filter: `lesson_id=eq.${lessonId}`
         },
         (payload) => {
-          console.log('New message received:', payload);
           setMessages(prev => [...prev, payload.new as ChatMessage]);
         }
       )
@@ -154,14 +231,28 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
           table: 'live_lesson_participants',
           filter: `lesson_id=eq.${lessonId}`
         },
-        async () => {
-          // Refetch participants on any change
+        async (payload) => {
+          // Refetch participants
           const { data } = await supabase
             .from('live_lesson_participants')
             .select('*')
             .eq('lesson_id', lessonId)
             .is('left_at', null);
-          if (data) setParticipants(data);
+          
+          if (data) {
+            setParticipants(data);
+            
+            // Connect to new participants
+            if (payload.eventType === 'INSERT' && webrtcManagerRef.current) {
+              const newParticipant = payload.new as Participant;
+              if (newParticipant.user_id !== user.id) {
+                await webrtcManagerRef.current.connectToPeer(
+                  newParticipant.user_id, 
+                  newParticipant.user_name
+                );
+              }
+            }
+          }
         }
       )
       .subscribe();
@@ -191,7 +282,7 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
       supabase.removeChannel(participantsChannel);
       supabase.removeChannel(lessonChannel);
     };
-  }, [lessonId, onEndLesson]);
+  }, [lessonId, user, onEndLesson]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -222,6 +313,18 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
     }
   };
 
+  const handleToggleVideo = () => {
+    const newState = !isVideoOn;
+    setIsVideoOn(newState);
+    webrtcManagerRef.current?.toggleVideo(newState);
+  };
+
+  const handleToggleMute = () => {
+    const newState = !isMuted;
+    setIsMuted(newState);
+    webrtcManagerRef.current?.toggleAudio(!newState);
+  };
+
   const handleToggleHand = async () => {
     if (!user) return;
     
@@ -242,7 +345,7 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
       }
     } catch (error) {
       console.error('Error toggling hand:', error);
-      setHandRaised(!newHandRaised); // Revert
+      setHandRaised(!newHandRaised);
     }
   };
 
@@ -250,15 +353,15 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
     if (!user) return;
     
     try {
+      await webrtcManagerRef.current?.cleanup();
+      
       if (role === 'teacher') {
-        // End the lesson for everyone
         await supabase
           .from('live_lessons')
           .update({ status: 'ended', ended_at: new Date().toISOString() })
           .eq('id', lessonId);
         toast.success('Lesson ended');
       } else {
-        // Just leave the lesson
         await supabase
           .from('live_lesson_participants')
           .update({ left_at: new Date().toISOString() })
@@ -273,11 +376,16 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
   };
 
   const raisedHands = participants.filter(p => p.hand_raised && p.role === 'student');
+  const teacher = participants.find(p => p.role === 'teacher');
+  const teacherStream = remoteStreams.find(s => s.peerId === teacher?.user_id);
 
   if (loading) {
     return (
       <div className="h-[calc(100vh-200px)] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Joining lesson...</p>
+        </div>
       </div>
     );
   }
@@ -296,6 +404,12 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {connecting && (
+            <Badge variant="outline" className="gap-1">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Connecting...
+            </Badge>
+          )}
           {raisedHands.length > 0 && role === 'teacher' && (
             <Badge variant="default" className="gap-1 bg-warning text-warning-foreground">
               <Hand className="w-3 h-3" />
@@ -304,37 +418,65 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
           )}
           <Badge variant="secondary" className="gap-1">
             <Users className="w-3 h-3" />
-            {participants.length} participant{participants.length !== 1 ? 's' : ''}
+            {participants.length}
           </Badge>
         </div>
       </div>
+
+      {/* Media Error Alert */}
+      {mediaError && (
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-destructive" />
+          <div>
+            <p className="font-medium text-destructive">Camera/Microphone Error</p>
+            <p className="text-sm text-muted-foreground">{mediaError}</p>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex gap-4">
         {/* Video Area */}
         <div className="flex-1 flex flex-col gap-4">
-          {/* Main Video */}
+          {/* Main Video - Teacher's view or featured stream */}
           <Card className="flex-1 bg-foreground/5 relative overflow-hidden">
-            <CardContent className="p-0 h-full flex items-center justify-center">
-              {isVideoOn ? (
+            <CardContent className="p-0 h-full">
+              {role === 'student' && teacherStream ? (
+                <VideoPlayer stream={teacherStream.stream} muted={false} className="w-full h-full object-cover" />
+              ) : role === 'teacher' && localStream ? (
+                <video
+                  ref={localVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className={cn(
+                    "w-full h-full object-cover",
+                    !isVideoOn && "hidden"
+                  )}
+                />
+              ) : (
                 <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
                   <div className="text-center">
                     <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                      <Video className="w-12 h-12 text-primary" />
+                      <VideoOff className="w-12 h-12 text-primary" />
                     </div>
-                    <p className="text-foreground text-lg font-medium">
-                      {role === 'teacher' ? 'Your Camera' : 'Teacher\'s Camera'}
+                    <p className="text-muted-foreground">
+                      {mediaError ? 'Camera unavailable' : 'Waiting for video...'}
                     </p>
-                    <p className="text-muted-foreground text-sm">Video preview</p>
                   </div>
-                </div>
-              ) : (
-                <div className="text-center text-muted-foreground">
-                  <VideoOff className="w-16 h-16 mx-auto mb-2" />
-                  <p>Camera is off</p>
                 </div>
               )}
               
+              {/* Show camera off placeholder */}
+              {!isVideoOn && role === 'teacher' && (
+                <div className="absolute inset-0 bg-muted flex items-center justify-center">
+                  <div className="text-center">
+                    <VideoOff className="w-16 h-16 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-muted-foreground">Camera is off</p>
+                  </div>
+                </div>
+              )}
+
               {/* Screen share indicator */}
               {isScreenSharing && (
                 <div className="absolute top-4 left-4">
@@ -364,6 +506,44 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
             </CardContent>
           </Card>
 
+          {/* Participant Videos Grid */}
+          {remoteStreams.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {/* Show local video as thumbnail for students */}
+              {role === 'student' && localStream && (
+                <div className="relative flex-shrink-0 w-32 h-24 rounded-lg overflow-hidden bg-muted">
+                  <video
+                    ref={localVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className={cn("w-full h-full object-cover", !isVideoOn && "hidden")}
+                  />
+                  {!isVideoOn && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <VideoOff className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="absolute bottom-1 left-1">
+                    <Badge variant="secondary" className="text-xs">You</Badge>
+                  </div>
+                </div>
+              )}
+              
+              {/* Remote streams (excluding teacher if student view) */}
+              {remoteStreams
+                .filter(s => role === 'teacher' || s.peerId !== teacher?.user_id)
+                .map(({ peerId, peerName, stream }) => (
+                  <div key={peerId} className="relative flex-shrink-0 w-32 h-24 rounded-lg overflow-hidden bg-muted">
+                    <VideoPlayer stream={stream} muted={false} className="w-full h-full object-cover" />
+                    <div className="absolute bottom-1 left-1">
+                      <Badge variant="secondary" className="text-xs">{peerName}</Badge>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+
           {/* Controls */}
           <Card className="bg-card">
             <CardContent className="p-4">
@@ -371,8 +551,9 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
                 <Button
                   variant={isMuted ? "destructive" : "secondary"}
                   size="icon"
-                  onClick={() => setIsMuted(!isMuted)}
+                  onClick={handleToggleMute}
                   className="h-12 w-12 rounded-full"
+                  disabled={!localStream}
                 >
                   {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                 </Button>
@@ -380,8 +561,9 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
                 <Button
                   variant={isVideoOn ? "secondary" : "destructive"}
                   size="icon"
-                  onClick={() => setIsVideoOn(!isVideoOn)}
+                  onClick={handleToggleVideo}
                   className="h-12 w-12 rounded-full"
+                  disabled={!localStream}
                 >
                   {isVideoOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
                 </Button>
@@ -522,6 +704,31 @@ const LiveLessonView: React.FC<LiveLessonViewProps> = ({
         )}
       </div>
     </div>
+  );
+};
+
+// Video player component for remote streams
+const VideoPlayer: React.FC<{ stream: MediaStream; muted: boolean; className?: string }> = ({ 
+  stream, 
+  muted, 
+  className 
+}) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  return (
+    <video
+      ref={videoRef}
+      autoPlay
+      playsInline
+      muted={muted}
+      className={className}
+    />
   );
 };
 
