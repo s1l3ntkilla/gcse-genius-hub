@@ -588,6 +588,7 @@ export type Database = {
           user_type: Database["public"]["Enums"]["user_type"]
         }[]
       }
+      get_user_ids_in_my_groups: { Args: never; Returns: string[] }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -608,9 +609,10 @@ export type Database = {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
-      is_group_member:
-        | { Args: { _group_id: string; _user_id: string }; Returns: boolean }
-        | { Args: { check_group_id: string }; Returns: boolean }
+      is_group_member: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_teacher: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {

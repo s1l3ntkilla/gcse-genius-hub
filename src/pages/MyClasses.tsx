@@ -360,7 +360,7 @@ const MyClasses: React.FC = () => {
           const memberInserts = members.map(m => ({
             group_id: groupChat.id,
             user_id: m.student_id,
-            role: 'member'
+            role: 'member' as const
           }));
 
           await supabase.from('group_members').insert(memberInserts);
