@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import CreateClassroomModal from '@/components/features/CreateClassroomModal';
 import InviteStudentModal from '@/components/features/InviteStudentModal';
 import JoinClassModal from '@/components/features/JoinClassModal';
+import ClassroomMembersModal from '@/components/features/ClassroomMembersModal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,6 +68,7 @@ const MyClasses: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [membersModalOpen, setMembersModalOpen] = useState(false);
   const [selectedClassroom, setSelectedClassroom] = useState<Classroom | null>(null);
 
   useEffect(() => {
@@ -180,6 +182,11 @@ const MyClasses: React.FC = () => {
   const handleInviteStudents = (classroom: Classroom) => {
     setSelectedClassroom(classroom);
     setInviteModalOpen(true);
+  };
+
+  const handleViewStudents = (classroom: Classroom) => {
+    setSelectedClassroom(classroom);
+    setMembersModalOpen(true);
   };
 
   const handleAcceptInvitation = async (invitationId: string, classroomId: string) => {
@@ -547,6 +554,10 @@ const MyClasses: React.FC = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleViewStudents(classroom)}>
+                            <Users className="w-4 h-4 mr-2" />
+                            View Students
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleInviteStudents(classroom)}>
                             <UserPlus className="w-4 h-4 mr-2" />
                             Invite Students
@@ -612,6 +623,13 @@ const MyClasses: React.FC = () => {
         open={joinModalOpen}
         onOpenChange={setJoinModalOpen}
         onSuccess={fetchData}
+      />
+      <ClassroomMembersModal
+        open={membersModalOpen}
+        onOpenChange={setMembersModalOpen}
+        classroom={selectedClassroom}
+        isTeacher={role === 'teacher'}
+        onMemberRemoved={fetchData}
       />
     </MainLayout>
   );
