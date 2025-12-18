@@ -433,22 +433,23 @@ const Auth: React.FC = () => {
                   <Label>Subject Preferences</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {subjects.map((subject) => (
-                      <div
+                      <label
                         key={subject.id}
+                        htmlFor={`subject-${subject.id}`}
                         className={cn(
                           'flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors',
                           selectedSubjects.includes(subject.id)
                             ? 'border-primary bg-primary/5'
                             : 'border-border hover:border-primary/50'
                         )}
-                        onClick={() => toggleSubject(subject.id)}
                       >
                         <Checkbox
+                          id={`subject-${subject.id}`}
                           checked={selectedSubjects.includes(subject.id)}
-                          onClick={(e) => e.stopPropagation()}
+                          onCheckedChange={() => toggleSubject(subject.id)}
                         />
                         <span className="text-sm">{subject.label}</span>
-                      </div>
+                      </label>
                     ))}
                   </div>
                 </div>
