@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, MessageSquare, Hand, Video, Bot, Settings, ChevronLeft, ChevronRight, GraduationCap, Users, FileText, BarChart3, LogOut, Palette, ArrowRightLeft, Lock } from 'lucide-react';
+import { LayoutDashboard, BookOpen, MessageSquare, Hand, Video, Bot, Settings, ChevronLeft, ChevronRight, Users, FileText, BarChart3, LogOut, Palette, ArrowRightLeft, Lock } from 'lucide-react';
+import notedlyLogo from '@/assets/notedly-logo.png';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -232,12 +233,11 @@ export const AppSidebar: React.FC<SidebarProps> = ({
       {/* Logo Section */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-primary-foreground" />
-          </div>
-          {!collapsed && <span className="font-display font-bold text-lg text-sidebar-foreground">
-              LearnAI
-            </span>}
+          <img 
+            src={notedlyLogo} 
+            alt="Notedly" 
+            className={cn("h-8 object-contain", collapsed ? "w-8" : "w-auto max-w-[140px]")}
+          />
         </div>
         {!collapsed && (
           <Popover open={colorPickerOpen} onOpenChange={setColorPickerOpen}>
