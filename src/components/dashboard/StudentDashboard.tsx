@@ -29,7 +29,7 @@ export const StudentDashboard: React.FC = () => {
             Welcome back, {user?.name?.split(' ')[0] || 'Student'}! 👋
           </h1>
           <p className="text-muted-foreground mt-1">
-            Ready to continue learning? You're doing great!
+            Ready to continue learning? You're doing great!!
           </p>
         </div>
         <div className="flex items-center gap-3">
