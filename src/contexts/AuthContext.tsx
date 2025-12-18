@@ -18,19 +18,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [role, setRole] = useState<UserRole>('student');
   const [user, setUser] = useState<User | null>(null);
 
-  // Sync user data from Supabase profile
+  // Sync user data from Supabase profile - automatically set teacher mode for teachers on login
   useEffect(() => {
     if (profile) {
+      const isTeacher = profile.user_type === 'teacher';
       const mappedUser: User = {
         id: profile.id,
         name: profile.full_name || profile.email,
         email: profile.email,
-        role: profile.user_type === 'teacher' ? 'teacher' : 'student',
+        role: isTeacher ? 'teacher' : 'student',
         avatar: profile.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || profile.email[0].toUpperCase(),
         subjects: (profile.subjects || []) as Subject[],
       };
       setUser(mappedUser);
-      setRole(profile.user_type === 'teacher' ? 'teacher' : 'student');
+      // Automatically set teacher mode for registered teachers on login
+      setRole(isTeacher ? 'teacher' : 'student');
     } else {
       setUser(null);
     }
