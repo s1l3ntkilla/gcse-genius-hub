@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, MessageSquare, Hand, Video, ChevronLeft, ChevronRight, Users, FileText, BarChart3, ArrowRightLeft, Lock } from 'lucide-react';
+import { LayoutDashboard, BookOpen, MessageSquare, Hand, Video, PanelLeftClose, PanelLeft, Users, FileText, BarChart3, ArrowRightLeft, Lock } from 'lucide-react';
+import notedlyLogo from '@/assets/notedly-dark.png';
+import notedlyIcon from '@/assets/notedly-smaller.png';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -194,21 +195,59 @@ export const AppSidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
       collapsed ? "w-20" : "w-72"
     )}>
       {/* Logo Section */}
-      <div className="flex items-center h-20 px-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-xl">N</span>
-          </div>
-          {!collapsed && (
-            <span className="font-display text-2xl font-bold text-foreground tracking-tight">
-              NOTELY
-            </span>
-          )}
+      <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
+        <div className="relative flex items-center justify-center h-10">
+          {/* Full logo - visible when expanded */}
+          <img 
+            src={notedlyLogo} 
+            alt="Notedly" 
+            className={cn(
+              "h-9 object-contain transition-all duration-300 ease-in-out",
+              collapsed 
+                ? "opacity-0 scale-75 absolute pointer-events-none" 
+                : "opacity-100 scale-100 w-auto max-w-[160px]"
+            )} 
+          />
+          {/* Icon - visible when collapsed */}
+          <img 
+            src={notedlyIcon} 
+            alt="Notedly" 
+            className={cn(
+              "h-10 w-10 object-contain transition-all duration-300 ease-in-out",
+              collapsed 
+                ? "opacity-100 scale-100" 
+                : "opacity-0 scale-75 absolute pointer-events-none"
+            )} 
+          />
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto scrollbar-thin">
+      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto scrollbar-thin">
+        {/* Collapse Toggle - Above navigation */}
+        {collapsed ? (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <button 
+                onClick={onToggle} 
+                className="flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group relative w-full text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                <PanelLeft className="w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="ml-2">
+              Expand sidebar
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <button 
+            onClick={onToggle} 
+            className="flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group relative w-full text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <PanelLeftClose className="w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" />
+            <span className="font-medium text-[15px]">Collapse</span>
+          </button>
+        )}
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const NavIcon = item.icon;
@@ -286,15 +325,6 @@ export const AppSidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
         </div>
       </div>
 
-      {/* Collapse Toggle */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onToggle}
-        className="absolute -right-4 top-24 w-8 h-8 rounded-full bg-card border border-border shadow-md hover:bg-accent"
-      >
-        {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-      </Button>
     </aside>
   );
 };
