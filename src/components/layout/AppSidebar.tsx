@@ -121,7 +121,7 @@ const studentNavItems = [{
   path: '/messages'
 }, {
   icon: Hand,
-  label: 'Classroom Q&A',
+  label: 'Classroom',
   path: '/qa'
 }, {
   icon: Video,
