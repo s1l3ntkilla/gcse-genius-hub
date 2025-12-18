@@ -131,18 +131,26 @@ export class WebRTCManager {
   async connectToPeer(peerId: string, peerName: string): Promise<void> {
     if (this.peerConnections.has(peerId) || peerId === this.userId) return;
     
+    // Small delay to ensure both sides have initialized
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     console.log('[WebRTC] Connecting to peer:', peerId, peerName);
     
     const pc = this.createPeerConnection(peerId, peerName);
     
     // Create and send offer
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    
-    await this.sendSignal(peerId, 'offer', {
-      sdp: pc.localDescription,
-      peerName: this.userName
-    });
+    try {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      
+      await this.sendSignal(peerId, 'offer', {
+        sdp: pc.localDescription,
+        peerName: this.userName
+      });
+    } catch (error) {
+      console.error('[WebRTC] Error creating offer:', error);
+      this.removePeer(peerId);
+    }
   }
 
   private createPeerConnection(peerId: string, peerName: string): RTCPeerConnection {
