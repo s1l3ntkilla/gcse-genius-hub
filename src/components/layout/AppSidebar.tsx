@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, BookOpen, MessageSquare, Hand, Video, ChevronLeft, ChevronRight, Users, FileText, BarChart3, ArrowRightLeft, Lock } from 'lucide-react';
 import notedlyLogo from '@/assets/notedly-dark.png';
+import notedlyIcon from '@/assets/notedly-smaller.png';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -179,8 +180,29 @@ export const AppSidebar: React.FC<SidebarProps> = ({
   return <aside className={cn("fixed left-0 top-0 z-40 h-screen transition-all duration-300 ease-in-out flex flex-col bg-sidebar", collapsed ? "w-16" : "w-64")}>
       {/* Logo Section */}
       <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <img src={notedlyLogo} alt="Notedly" className={cn("h-8 object-contain", collapsed ? "w-8" : "w-auto max-w-[140px]")} />
+        <div className="relative flex items-center justify-center h-8">
+          {/* Full logo - visible when expanded */}
+          <img 
+            src={notedlyLogo} 
+            alt="Notedly" 
+            className={cn(
+              "h-8 object-contain transition-all duration-300 ease-in-out",
+              collapsed 
+                ? "opacity-0 scale-75 absolute pointer-events-none" 
+                : "opacity-100 scale-100 w-auto max-w-[140px]"
+            )} 
+          />
+          {/* Icon - visible when collapsed */}
+          <img 
+            src={notedlyIcon} 
+            alt="Notedly" 
+            className={cn(
+              "h-8 w-8 object-contain transition-all duration-300 ease-in-out",
+              collapsed 
+                ? "opacity-100 scale-100" 
+                : "opacity-0 scale-75 absolute pointer-events-none"
+            )} 
+          />
         </div>
       </div>
 
