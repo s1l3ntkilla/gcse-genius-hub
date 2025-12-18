@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, MessageSquare, Hand, Video, Bot, Settings, ChevronLeft, ChevronRight, GraduationCap, Users, FileText, BarChart3, LogOut, ShieldAlert, X } from 'lucide-react';
+import { LayoutDashboard, BookOpen, MessageSquare, Hand, Video, Bot, Settings, ChevronLeft, ChevronRight, GraduationCap, Users, FileText, BarChart3, LogOut, ShieldAlert, X, Palette } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
@@ -9,6 +9,16 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
+const SIDEBAR_COLORS = [
+  { name: 'Default', value: 'hsl(var(--sidebar-background))' },
+  { name: 'Slate', value: 'hsl(215, 28%, 17%)' },
+  { name: 'Navy', value: 'hsl(224, 50%, 17%)' },
+  { name: 'Forest', value: 'hsl(150, 30%, 15%)' },
+  { name: 'Wine', value: 'hsl(340, 30%, 18%)' },
+  { name: 'Purple', value: 'hsl(270, 30%, 18%)' },
+  { name: 'Charcoal', value: 'hsl(0, 0%, 12%)' },
+  { name: 'Ocean', value: 'hsl(200, 40%, 16%)' },
+];
 // Role Switcher Component
 const RoleSwitcher: React.FC<{
   collapsed: boolean;
@@ -152,9 +162,23 @@ export const AppSidebar: React.FC<SidebarProps> = ({
     logout
   } = useAuth();
   const navItems = role === 'student' ? studentNavItems : teacherNavItems;
-  return <aside className={cn("fixed left-0 top-0 z-40 h-screen bg-sidebar transition-all duration-300 ease-in-out flex flex-col", collapsed ? "w-16" : "w-64")}>
+  
+  // Sidebar color customization
+  const [sidebarColor, setSidebarColor] = useState(() => {
+    return localStorage.getItem('sidebar-color') || SIDEBAR_COLORS[0].value;
+  });
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('sidebar-color', sidebarColor);
+  }, [sidebarColor]);
+
+  return <aside 
+    className={cn("fixed left-0 top-0 z-40 h-screen transition-all duration-300 ease-in-out flex flex-col", collapsed ? "w-16" : "w-64")}
+    style={{ backgroundColor: sidebarColor }}
+  >
       {/* Logo Section */}
-      <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
+      <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center">
             <GraduationCap className="w-5 h-5 text-primary-foreground" />
@@ -163,6 +187,37 @@ export const AppSidebar: React.FC<SidebarProps> = ({
               LearnAI
             </span>}
         </div>
+        {!collapsed && (
+          <Popover open={colorPickerOpen} onOpenChange={setColorPickerOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent">
+                <Palette className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent side="right" align="start" className="w-48 p-3">
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Sidebar Color</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {SIDEBAR_COLORS.map((color) => (
+                    <button
+                      key={color.name}
+                      onClick={() => {
+                        setSidebarColor(color.value);
+                        setColorPickerOpen(false);
+                      }}
+                      className={cn(
+                        "w-8 h-8 rounded-md border-2 transition-all hover:scale-110",
+                        sidebarColor === color.value ? "border-primary ring-2 ring-primary/30" : "border-transparent"
+                      )}
+                      style={{ backgroundColor: color.value }}
+                      title={color.name}
+                    />
+                  ))}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
       </div>
 
       {/* Navigation */}
