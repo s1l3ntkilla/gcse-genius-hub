@@ -15,6 +15,13 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
+const getGreeting = (): string => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+};
+
 export const TeacherDashboard: React.FC = () => {
   const { user } = useAuth();
 
@@ -24,7 +31,7 @@ export const TeacherDashboard: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-bold text-foreground">
-            Good morning, {user?.name?.split(' ')[0] || 'Teacher'}! 📚
+            {getGreeting()}, {user?.name?.split(' ')[0] || 'Teacher'}!
           </h1>
           <p className="text-muted-foreground mt-1">
             Here's what's happening in your classes today

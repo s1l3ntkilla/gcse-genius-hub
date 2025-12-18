@@ -154,7 +154,7 @@ export const AIAssistantWidget: React.FC = () => {
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg btn-glow bg-primary hover:bg-primary-dark z-50 animate-bounce-soft"
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg bg-primary hover:bg-primary-dark hover:scale-110 transition-transform z-50"
       >
         <Bot className="w-6 h-6" />
       </Button>

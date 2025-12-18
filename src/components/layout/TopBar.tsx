@@ -15,21 +15,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { cn } from '@/lib/utils';
 import { QuickQuestionModal } from '../features/QuickQuestionModal';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const notifications: { id: string; title: string; content: string; read: boolean }[] = [];
-
-const navLinks = [
-  { label: 'HOME', path: '/' },
-  { label: 'SPACES', path: '/revision' },
-  { label: 'DISCOVER', path: '/lessons' },
-];
 
 export const TopBar: React.FC = () => {
   const { role } = useAuth();
   const { signOut, profile } = useSupabaseAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [showQuestionModal, setShowQuestionModal] = useState(false);
 
   const handleLogout = async () => {
@@ -41,26 +34,8 @@ export const TopBar: React.FC = () => {
   return (
     <>
       <header className="sticky top-0 z-30 h-16 bg-card/95 backdrop-blur-md border-b border-border/50 flex items-center justify-between px-8">
-        {/* Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={cn(
-                "text-sm font-semibold tracking-wide transition-colors",
-                location.pathname === link.path
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-
         {/* Search Bar */}
-        <div className="relative w-80 mx-auto">
+        <div className="relative w-80">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search..."

@@ -28,10 +28,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       
       <div className={cn(
         "transition-all duration-300 ease-in-out",
-        sidebarCollapsed ? "ml-16" : "ml-64"
+        sidebarCollapsed ? "ml-20" : "ml-72"
       )}>
         <TopBar />
-        <main id="main-content" className="p-6" role="main" aria-label="Main content">
+        <main id="main-content" className="p-8" role="main" aria-label="Main content">
           {children}
         </main>
       </div>

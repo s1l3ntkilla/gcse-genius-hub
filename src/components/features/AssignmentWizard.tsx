@@ -418,7 +418,7 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
       case 1:
         return (
           <div className="space-y-4">
-            <p className="text-muted-foreground">📚 Which exam board are you creating this assignment for?</p>
+            <p className="text-muted-foreground">Which exam board are you creating this assignment for?</p>
             <RadioGroup value={examBoard || ''} onValueChange={(v) => setExamBoard(v as ExamBoard)}>
               {(['AQA', 'Edexcel', 'OCR'] as ExamBoard[]).map((board) => (
                 <div key={board} className="flex items-center space-x-3 p-4 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors">
@@ -433,7 +433,7 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
       case 2:
         return (
           <div className="space-y-4">
-            <p className="text-muted-foreground">🎓 Select the subject for this assignment:</p>
+            <p className="text-muted-foreground">Select the subject for this assignment:</p>
             <RadioGroup value={subject || ''} onValueChange={(v) => setSubject(v as Subject)}>
               {(['Chemistry', 'Biology', 'Maths'] as Subject[]).map((subj) => (
                 <div key={subj} className="flex items-center space-x-3 p-4 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors">
@@ -445,7 +445,7 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
             {examBoard && subject && (
               <p className="text-sm text-success flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
-                ✨ Found {examBoard} GCSE {subject} specification!
+                Found {examBoard} GCSE {subject} specification!
               </p>
             )}
           </div>
@@ -454,7 +454,7 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
       case 3:
         return (
           <div className="space-y-4">
-            <p className="text-muted-foreground">🎯 Select a main topic and subtopics:</p>
+            <p className="text-muted-foreground">Select a main topic and subtopics:</p>
             
             {examBoard && subject && (
               <>
@@ -512,7 +512,7 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
       case 4:
         return (
           <div className="space-y-6">
-            <p className="text-muted-foreground">📝 How many questions and marks would you like?</p>
+            <p className="text-muted-foreground">How many questions and marks would you like?</p>
             
             <div className="space-y-4">
               <div className="space-y-2">
@@ -612,7 +612,7 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
       case 6:
         return (
           <div className="space-y-6">
-            <p className="text-muted-foreground">✨ Generating your questions using command word guidelines...</p>
+            <p className="text-muted-foreground">Generating your questions using command word guidelines...</p>
             
             {isGenerating ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-4">
@@ -706,7 +706,7 @@ const AssignmentWizard: React.FC<AssignmentWizardProps> = ({ open, onOpenChange 
               <Send className="w-10 h-10 text-success" />
             </div>
             <div>
-              <h3 className="text-xl font-bold mb-2">Ready to Publish! 🎉</h3>
+              <h3 className="text-xl font-bold mb-2">Ready to Publish!</h3>
               <p className="text-muted-foreground">
                 Assignment: <span className="font-medium text-foreground">{assignmentName}</span>
               </p>

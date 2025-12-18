@@ -47,7 +47,7 @@ export const StudentDashboard: React.FC = () => {
                 <div>
                   <p className="text-muted-foreground text-lg mb-2">Welcome back,</p>
                   <h1 className="font-display text-4xl font-bold text-foreground mb-4">
-                    {user?.name?.split(' ')[0] || 'Student'} <span className="inline-block animate-float">👋</span>
+                    {user?.name?.split(' ')[0] || 'Student'}
                   </h1>
                   <p className="text-muted-foreground max-w-md">
                     Ready to continue learning? You're making great progress!
@@ -168,4 +168,4 @@ export const StudentDashboard: React.FC = () => {
       </div>
     </div>
   );
-};
+}; 

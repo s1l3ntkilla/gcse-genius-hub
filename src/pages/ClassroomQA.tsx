@@ -588,7 +588,7 @@ const ClassroomQA: React.FC = () => {
                                       {question.classroom_name}
                                     </Badge>
                                     <span className="text-xs text-muted-foreground">
-                                      {question.anonymous ? '👤 Anonymous' : `📝 ${question.student_name}`}
+                                      {question.anonymous ? 'Anonymous' : question.student_name}
                                     </span>
                                     <span className="text-xs text-muted-foreground">
                                       {new Date(question.created_at).toLocaleString([], {
