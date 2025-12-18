@@ -6,3 +6,7 @@ site_url = "https://wtjqkqzkgijjhrrrwowt.lovableproject.com"
 
 [auth.external.google]
 enabled = true
+
+[functions.revision-ai]
+enabled = true
+verify_jwt = false

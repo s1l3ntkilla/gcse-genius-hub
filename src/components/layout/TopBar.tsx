@@ -11,12 +11,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { sampleNotifications } from '@/data/sampleData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { cn } from '@/lib/utils';
 import { QuickQuestionModal } from '../features/QuickQuestionModal';
 import { useNavigate } from 'react-router-dom';
+
+// Empty notifications - will be populated from database later
+const notifications: { id: string; title: string; content: string; read: boolean }[] = [];
 
 export const TopBar: React.FC = () => {
   const { role } = useAuth();
@@ -28,7 +30,7 @@ export const TopBar: React.FC = () => {
     await signOut();
     navigate('/auth');
   };
-  const unreadCount = sampleNotifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <>
@@ -79,7 +81,7 @@ export const TopBar: React.FC = () => {
                 </span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {sampleNotifications.slice(0, 5).map((notification) => (
+              {notifications.length > 0 ? notifications.slice(0, 5).map((notification) => (
                 <DropdownMenuItem 
                   key={notification.id}
                   className={cn(
@@ -99,7 +101,11 @@ export const TopBar: React.FC = () => {
                     {notification.content}
                   </span>
                 </DropdownMenuItem>
-              ))}
+              )) : (
+                <DropdownMenuItem className="text-center text-muted-foreground text-sm py-4">
+                  No notifications yet
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-center text-primary text-sm">
                 View all notifications
