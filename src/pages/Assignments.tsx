@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { 
   FileText, 
   Clock, 
@@ -19,7 +21,8 @@ import {
   Star,
   Sparkles,
   Loader2,
-  X
+  X,
+  Send
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,6 +30,7 @@ import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import AssignmentWizard from '@/components/features/AssignmentWizard';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface GeneratedQuestion {
   id: string;
@@ -65,6 +69,7 @@ interface Submission {
   submitted_at: string | null;
   graded_at: string | null;
   feedback: string | null;
+  answers?: Record<string, string>;
 }
 
 const Assignments: React.FC = () => {
@@ -76,6 +81,8 @@ const Assignments: React.FC = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -106,12 +113,87 @@ const Assignments: React.FC = () => {
           .eq('student_id', user?.id);
 
         if (submissionsError) throw submissionsError;
-        setSubmissions(submissionsData || []);
+        setSubmissions((submissionsData || []) as unknown as Submission[]);
       }
     } catch (error) {
       console.error('Error fetching assignments:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Handle opening assignment - reset answers
+  const handleOpenAssignment = (assignment: Assignment) => {
+    setSelectedAssignment(assignment);
+    // Load existing answers if there's a pending submission
+    const existingSubmission = getSubmissionForAssignment(assignment.id);
+    if (existingSubmission?.answers) {
+      setAnswers(existingSubmission.answers);
+    } else {
+      setAnswers({});
+    }
+  };
+
+  // Handle answer change
+  const handleAnswerChange = (questionId: string, answer: string) => {
+    setAnswers(prev => ({ ...prev, [questionId]: answer }));
+  };
+
+  // Submit assignment
+  const handleSubmitAssignment = async () => {
+    if (!selectedAssignment || !user) return;
+
+    // Check if all questions are answered
+    const questions = selectedAssignment.questions || [];
+    const unanswered = questions.filter(q => !answers[q.id]?.trim());
+    
+    if (unanswered.length > 0) {
+      toast.error(`Please answer all questions. ${unanswered.length} question(s) remaining.`);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Check if submission already exists
+      const existingSubmission = getSubmissionForAssignment(selectedAssignment.id);
+      
+      if (existingSubmission) {
+        // Update existing submission
+        const { error } = await supabase
+          .from('assignment_submissions')
+          .update({
+            answers: answers as any,
+            status: 'submitted',
+            submitted_at: new Date().toISOString(),
+          })
+          .eq('id', existingSubmission.id);
+
+        if (error) throw error;
+      } else {
+        // Create new submission
+        const { error } = await supabase
+          .from('assignment_submissions')
+          .insert({
+            assignment_id: selectedAssignment.id,
+            student_id: user.id,
+            answers: answers as any,
+            status: 'submitted',
+            submitted_at: new Date().toISOString(),
+            max_score: selectedAssignment.total_marks,
+          });
+
+        if (error) throw error;
+      }
+
+      toast.success('Assignment submitted successfully!');
+      setSelectedAssignment(null);
+      setAnswers({});
+      fetchAssignments();
+    } catch (error: any) {
+      console.error('Error submitting assignment:', error);
+      toast.error(error.message || 'Failed to submit assignment');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -148,7 +230,7 @@ const Assignments: React.FC = () => {
       <Card 
         key={assignment.id} 
         className="card-elevated hover:shadow-lg transition-shadow cursor-pointer"
-        onClick={() => setSelectedAssignment(assignment)}
+        onClick={() => handleOpenAssignment(assignment)}
       >
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-4">
@@ -383,34 +465,114 @@ const Assignments: React.FC = () => {
                   <div className="space-y-4">
                     <h3 className="font-semibold text-lg">Questions</h3>
                     {selectedAssignment.questions && Array.isArray(selectedAssignment.questions) ? (
-                      selectedAssignment.questions.map((question, index) => (
-                        <Card key={question.id || index} className="border-l-4 border-l-primary">
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <span className="text-sm font-medium text-primary">Q{index + 1}</span>
-                                  <Badge variant="outline" className="text-xs">{question.commandWord}</Badge>
-                                  <Badge variant="secondary" className="text-xs">{question.difficulty}</Badge>
+                      selectedAssignment.questions.map((question, index) => {
+                        const existingSubmission = getSubmissionForAssignment(selectedAssignment.id);
+                        const isSubmitted = existingSubmission?.status === 'submitted' || existingSubmission?.status === 'graded';
+                        
+                        return (
+                          <Card key={question.id || index} className="border-l-4 border-l-primary">
+                            <CardContent className="p-4 space-y-3">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-sm font-medium text-primary">Q{index + 1}</span>
+                                    <Badge variant="outline" className="text-xs">{question.commandWord}</Badge>
+                                    <Badge variant="secondary" className="text-xs">{question.difficulty}</Badge>
+                                  </div>
+                                  <p className="text-foreground">{question.question}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Topic: {question.subtopic}
+                                  </p>
                                 </div>
-                                <p className="text-foreground">{question.question}</p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Topic: {question.subtopic}
-                                </p>
+                                <Badge className="bg-primary/10 text-primary hover:bg-primary/20">
+                                  {question.marks} {question.marks === 1 ? 'mark' : 'marks'}
+                                </Badge>
                               </div>
-                              <Badge className="bg-primary/10 text-primary hover:bg-primary/20">
-                                {question.marks} {question.marks === 1 ? 'mark' : 'marks'}
-                              </Badge>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
+                              
+                              {/* Answer input for students */}
+                              {role === 'student' && (
+                                <div className="space-y-2">
+                                  <Label htmlFor={`answer-${question.id}`} className="text-sm font-medium">
+                                    Your Answer
+                                  </Label>
+                                  <Textarea
+                                    id={`answer-${question.id}`}
+                                    placeholder="Type your answer here..."
+                                    value={answers[question.id] || ''}
+                                    onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                                    disabled={isSubmitted}
+                                    className={cn(
+                                      "min-h-[100px] resize-y",
+                                      isSubmitted && "bg-muted cursor-not-allowed"
+                                    )}
+                                  />
+                                  {answers[question.id] && (
+                                    <p className="text-xs text-muted-foreground text-right">
+                                      {answers[question.id].length} characters
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        );
+                      })
                     ) : (
                       <p className="text-muted-foreground text-center py-4">
                         No questions available
                       </p>
                     )}
                   </div>
+
+                  {/* Submit button for students */}
+                  {role === 'student' && selectedAssignment.questions && selectedAssignment.questions.length > 0 && (
+                    (() => {
+                      const existingSubmission = getSubmissionForAssignment(selectedAssignment.id);
+                      const isSubmitted = existingSubmission?.status === 'submitted' || existingSubmission?.status === 'graded';
+                      
+                      if (isSubmitted) {
+                        return (
+                          <div className="flex items-center justify-center gap-2 p-4 bg-success/10 rounded-lg">
+                            <CheckCircle className="w-5 h-5 text-success" />
+                            <span className="text-success font-medium">
+                              Assignment {existingSubmission?.status === 'graded' ? 'graded' : 'submitted'}
+                            </span>
+                          </div>
+                        );
+                      }
+                      
+                      const answeredCount = Object.values(answers).filter(a => a?.trim()).length;
+                      const totalQuestions = selectedAssignment.questions.length;
+                      
+                      return (
+                        <div className="space-y-3 pt-4 border-t">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">
+                              Progress: {answeredCount}/{totalQuestions} questions answered
+                            </span>
+                            <Progress value={(answeredCount / totalQuestions) * 100} className="w-32 h-2" />
+                          </div>
+                          <Button 
+                            onClick={handleSubmitAssignment}
+                            disabled={isSubmitting || answeredCount === 0}
+                            className="w-full gap-2"
+                          >
+                            {isSubmitting ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Submitting...
+                              </>
+                            ) : (
+                              <>
+                                <Send className="w-4 h-4" />
+                                Submit Assignment
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      );
+                    })()
+                  )}
                 </div>
               </ScrollArea>
             )}
