@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, BookOpen, MessageSquare, Hand, Video, Bot, Settings, ChevronLeft, ChevronRight, Users, FileText, BarChart3, LogOut, Palette, ArrowRightLeft, Lock } from 'lucide-react';
-import notedlyLogo from '@/assets/notedly-logo.png';
+import notedlyLogo from '@/assets/notedly-dark.png';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
