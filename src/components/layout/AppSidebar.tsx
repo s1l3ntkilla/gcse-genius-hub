@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, MessageSquare, Hand, Video, Bot, Settings, ChevronLeft, ChevronRight, GraduationCap, Users, FileText, BarChart3, LogOut, Palette } from 'lucide-react';
+import { LayoutDashboard, BookOpen, MessageSquare, Hand, Video, Bot, Settings, ChevronLeft, ChevronRight, GraduationCap, Users, FileText, BarChart3, LogOut, Palette, ArrowRightLeft, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { UserRole } from '@/types';
 
 const SIDEBAR_COLORS = [
   { name: 'Default', value: 'hsl(var(--sidebar-background))' },
@@ -21,21 +23,129 @@ const SIDEBAR_COLORS = [
 // Role Display Component (shows current mode based on profile)
 const RoleDisplay: React.FC<{
   collapsed: boolean;
-  role: string;
-}> = ({ collapsed, role }) => {
+  role: UserRole;
+  accountType: UserRole;
+  isTeacherAccount: boolean;
+  onSwitchMode: (mode: UserRole) => void;
+}> = ({ collapsed, role, accountType, isTeacherAccount, onSwitchMode }) => {
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleSwitchMode = (newMode: UserRole) => {
+    onSwitchMode(newMode);
+    setDialogOpen(false);
+  };
+
   return (
     <div className="px-3 py-2 border-t border-sidebar-border">
-      <div className={cn(
-        "w-full flex items-center gap-3 px-3 py-2 rounded-lg",
-        "bg-sidebar-accent/50 text-sidebar-foreground/80"
-      )}>
-        <div className={cn("w-2 h-2 rounded-full", role === 'student' ? "bg-success" : "bg-warning")} />
-        {!collapsed && (
-          <span className="text-xs font-medium">
-            {role === 'student' ? 'Student Mode' : 'Teacher Mode'}
-          </span>
-        )}
-      </div>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogTrigger asChild>
+          <button
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200",
+              "bg-sidebar-accent/50 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+              "cursor-pointer"
+            )}
+          >
+            <div className={cn("w-2 h-2 rounded-full", role === 'student' ? "bg-success" : "bg-warning")} />
+            {!collapsed && (
+              <span className="text-xs font-medium flex-1 text-left">
+                {role === 'student' ? 'Student Mode' : 'Teacher Mode'}
+              </span>
+            )}
+            {!collapsed && (
+              <ArrowRightLeft className="w-3 h-3 opacity-60" />
+            )}
+          </button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {isTeacherAccount ? (
+                <>
+                  <ArrowRightLeft className="w-5 h-5" />
+                  Switch Viewing Mode
+                </>
+              ) : (
+                <>
+                  <Lock className="w-5 h-5" />
+                  Account Type
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              {isTeacherAccount 
+                ? "As a teacher, you can switch between viewing modes to preview what students see."
+                : "Your account type determines which features you can access."
+              }
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-3 pt-4">
+            {isTeacherAccount ? (
+              <>
+                {/* Teacher can switch modes */}
+                <button
+                  onClick={() => handleSwitchMode('teacher')}
+                  className={cn(
+                    "w-full flex items-center gap-4 p-4 rounded-lg border-2 transition-all",
+                    role === 'teacher' 
+                      ? "border-warning bg-warning/10" 
+                      : "border-border hover:border-warning/50 hover:bg-muted"
+                  )}
+                >
+                  <div className={cn("w-3 h-3 rounded-full bg-warning", role === 'teacher' && "ring-4 ring-warning/30")} />
+                  <div className="flex-1 text-left">
+                    <p className="font-medium">Teacher Mode</p>
+                    <p className="text-sm text-muted-foreground">Access all teacher features, manage classes, and view analytics</p>
+                  </div>
+                  {role === 'teacher' && (
+                    <span className="text-xs font-medium text-warning bg-warning/20 px-2 py-1 rounded">Active</span>
+                  )}
+                </button>
+                
+                <button
+                  onClick={() => handleSwitchMode('student')}
+                  className={cn(
+                    "w-full flex items-center gap-4 p-4 rounded-lg border-2 transition-all",
+                    role === 'student' 
+                      ? "border-success bg-success/10" 
+                      : "border-border hover:border-success/50 hover:bg-muted"
+                  )}
+                >
+                  <div className={cn("w-3 h-3 rounded-full bg-success", role === 'student' && "ring-4 ring-success/30")} />
+                  <div className="flex-1 text-left">
+                    <p className="font-medium">Student Mode</p>
+                    <p className="text-sm text-muted-foreground">Preview the student experience and revision tools</p>
+                  </div>
+                  {role === 'student' && (
+                    <span className="text-xs font-medium text-success bg-success/20 px-2 py-1 rounded">Active</span>
+                  )}
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Student account - can't switch */}
+                <div className="flex items-center gap-4 p-4 rounded-lg border-2 border-success bg-success/10">
+                  <div className="w-3 h-3 rounded-full bg-success ring-4 ring-success/30" />
+                  <div className="flex-1">
+                    <p className="font-medium">Student Account</p>
+                    <p className="text-sm text-muted-foreground">You're logged in as a student</p>
+                  </div>
+                  <span className="text-xs font-medium text-success bg-success/20 px-2 py-1 rounded">Active</span>
+                </div>
+                
+                <div className="flex items-center gap-4 p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/30">
+                  <Lock className="w-5 h-5 text-muted-foreground" />
+                  <div className="flex-1">
+                    <p className="font-medium text-muted-foreground">Teacher Mode</p>
+                    <p className="text-sm text-muted-foreground">You need a teacher account to access teacher features. Contact your administrator if you believe this is an error.</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -102,7 +212,7 @@ export const AppSidebar: React.FC<SidebarProps> = ({
   onToggle
 }) => {
   const location = useLocation();
-  const { user, role, logout } = useAuth();
+  const { user, role, accountType, isTeacherAccount, switchViewingMode, logout } = useAuth();
   const navItems = role === 'student' ? studentNavItems : teacherNavItems;
   
   // Sidebar color customization
@@ -184,7 +294,13 @@ export const AppSidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* Role Switcher */}
-      <RoleDisplay collapsed={collapsed} role={role} />
+      <RoleDisplay 
+        collapsed={collapsed} 
+        role={role} 
+        accountType={accountType}
+        isTeacherAccount={isTeacherAccount}
+        onSwitchMode={switchViewingMode}
+      />
 
       {/* User Profile */}
       <div className="p-3 border-t border-sidebar-border">
