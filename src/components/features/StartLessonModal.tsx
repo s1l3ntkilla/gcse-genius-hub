@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 interface StartLessonModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onStartLesson: (lessonData: LessonData) => void;
+  onStartLesson: (lessonId: string, lessonData: LessonData) => void;
 }
 
 interface LessonData {
@@ -73,27 +73,46 @@ const StartLessonModal: React.FC<StartLessonModalProps> = ({
     }
   };
 
-  const handleStart = () => {
-    if (!title || !classroomId) return;
+  const handleStart = async () => {
+    if (!title || !classroomId || !user) return;
 
     const selectedClassroom = classrooms.find(c => c.id === classroomId);
     if (!selectedClassroom) return;
 
     setLoading(true);
     
-    // Simulate starting a lesson
-    setTimeout(() => {
-      onStartLesson({
+    try {
+      // Create the lesson in the database
+      const { data: lessonData, error } = await supabase
+        .from('live_lessons')
+        .insert({
+          classroom_id: classroomId,
+          teacher_id: user.id,
+          title,
+          description: description || null,
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      onStartLesson(lessonData.id, {
         title,
         classroomId,
         classroomName: selectedClassroom.name,
         description
       });
-      toast.success('Live lesson started!');
+      
+      toast.success('Live lesson started');
       onOpenChange(false);
       resetForm();
+    } catch (error) {
+      console.error('Error starting lesson:', error);
+      toast.error('Failed to start lesson');
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   const resetForm = () => {

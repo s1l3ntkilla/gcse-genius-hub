@@ -310,6 +310,126 @@ export type Database = {
           },
         ]
       }
+      live_lesson_messages: {
+        Row: {
+          created_at: string
+          id: string
+          lesson_id: string
+          message: string
+          sender_id: string
+          sender_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lesson_id: string
+          message: string
+          sender_id: string
+          sender_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lesson_id?: string
+          message?: string
+          sender_id?: string
+          sender_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_lesson_messages_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "live_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_lesson_participants: {
+        Row: {
+          hand_raised: boolean
+          id: string
+          joined_at: string
+          left_at: string | null
+          lesson_id: string
+          role: string
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          hand_raised?: boolean
+          id?: string
+          joined_at?: string
+          left_at?: string | null
+          lesson_id: string
+          role: string
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          hand_raised?: boolean
+          id?: string
+          joined_at?: string
+          left_at?: string | null
+          lesson_id?: string
+          role?: string
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_lesson_participants_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "live_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_lessons: {
+        Row: {
+          classroom_id: string
+          created_at: string
+          description: string | null
+          ended_at: string | null
+          id: string
+          started_at: string
+          status: string
+          teacher_id: string
+          title: string
+        }
+        Insert: {
+          classroom_id: string
+          created_at?: string
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          teacher_id: string
+          title: string
+        }
+        Update: {
+          classroom_id?: string
+          created_at?: string
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          teacher_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_lessons_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
