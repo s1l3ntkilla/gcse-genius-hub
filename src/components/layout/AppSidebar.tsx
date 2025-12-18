@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, MessageSquare, Hand, Video, Bot, Settings, ChevronLeft, ChevronRight, GraduationCap, Users, FileText, BarChart3, LogOut, ShieldAlert, X, Palette } from 'lucide-react';
+import { LayoutDashboard, BookOpen, MessageSquare, Hand, Video, Bot, Settings, ChevronLeft, ChevronRight, GraduationCap, Users, FileText, BarChart3, LogOut, Palette } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -19,78 +18,26 @@ const SIDEBAR_COLORS = [
   { name: 'Charcoal', value: 'hsl(0, 0%, 12%)' },
   { name: 'Ocean', value: 'hsl(200, 40%, 16%)' },
 ];
-// Role Switcher Component
-const RoleSwitcher: React.FC<{
+// Role Display Component (shows current mode based on profile)
+const RoleDisplay: React.FC<{
   collapsed: boolean;
   role: string;
-  switchRole: () => void;
-}> = ({
-  collapsed,
-  role,
-  switchRole
-}) => {
-  const {
-    profile
-  } = useSupabaseAuth();
-  const [open, setOpen] = useState(false);
-  const isTeacher = profile?.user_type === 'teacher';
-  const handleSwitchRole = () => {
-    if (isTeacher) {
-      switchRole();
-      setOpen(false);
-    }
-  };
-  return <div className="px-3 py-2 border-t border-sidebar-border">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button className={cn("w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors", "bg-sidebar-accent/50 hover:bg-sidebar-accent text-sidebar-foreground/80 hover:text-sidebar-foreground")}>
-            <div className={cn("w-2 h-2 rounded-full", role === 'student' ? "bg-success" : "bg-warning")} />
-            {!collapsed && <span className="text-xs font-medium">
-                {role === 'student' ? 'Student Mode' : 'Teacher Mode'}
-              </span>}
-          </button>
-        </PopoverTrigger>
-        <PopoverContent side="top" align="start" className="w-64 p-3">
-          {isTeacher ? <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Switch Mode</span>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setOpen(false)}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                You're registered as a teacher. You can switch between modes.
-              </p>
-              <div className="flex gap-2">
-                <Button size="sm" variant={role === 'student' ? 'default' : 'outline'} className="flex-1" onClick={() => {
-              if (role !== 'student') handleSwitchRole();
-              setOpen(false);
-            }}>
-                  Student View
-                </Button>
-                <Button size="sm" variant={role === 'teacher' ? 'default' : 'outline'} className="flex-1" onClick={() => {
-              if (role !== 'teacher') handleSwitchRole();
-              setOpen(false);
-            }}>
-                  Teacher View
-                </Button>
-              </div>
-            </div> : <div className="space-y-3">
-              <div className="flex items-center gap-2 text-warning">
-                <ShieldAlert className="h-5 w-5" />
-                <span className="text-sm font-medium">Access Restricted</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Teacher mode is only available for accounts registered as teachers. 
-                Please sign up with a teacher account to access teacher features.
-              </p>
-              <Button variant="outline" size="sm" className="w-full" onClick={() => setOpen(false)}>
-                Close
-              </Button>
-            </div>}
-        </PopoverContent>
-      </Popover>
-    </div>;
+}> = ({ collapsed, role }) => {
+  return (
+    <div className="px-3 py-2 border-t border-sidebar-border">
+      <div className={cn(
+        "w-full flex items-center gap-3 px-3 py-2 rounded-lg",
+        "bg-sidebar-accent/50 text-sidebar-foreground/80"
+      )}>
+        <div className={cn("w-2 h-2 rounded-full", role === 'student' ? "bg-success" : "bg-warning")} />
+        {!collapsed && (
+          <span className="text-xs font-medium">
+            {role === 'student' ? 'Student Mode' : 'Teacher Mode'}
+          </span>
+        )}
+      </div>
+    </div>
+  );
 };
 interface SidebarProps {
   collapsed: boolean;
@@ -155,12 +102,7 @@ export const AppSidebar: React.FC<SidebarProps> = ({
   onToggle
 }) => {
   const location = useLocation();
-  const {
-    user,
-    role,
-    switchRole,
-    logout
-  } = useAuth();
+  const { user, role, logout } = useAuth();
   const navItems = role === 'student' ? studentNavItems : teacherNavItems;
   
   // Sidebar color customization
@@ -242,7 +184,7 @@ export const AppSidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* Role Switcher */}
-      <RoleSwitcher collapsed={collapsed} role={role} switchRole={switchRole} />
+      <RoleDisplay collapsed={collapsed} role={role} />
 
       {/* User Profile */}
       <div className="p-3 border-t border-sidebar-border">
