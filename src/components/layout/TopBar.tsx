@@ -15,15 +15,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { cn } from '@/lib/utils';
 import { QuickQuestionModal } from '../features/QuickQuestionModal';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 
-// Empty notifications - will be populated from database later
 const notifications: { id: string; title: string; content: string; read: boolean }[] = [];
+
+const navLinks = [
+  { label: 'HOME', path: '/' },
+  { label: 'SPACES', path: '/revision' },
+  { label: 'DISCOVER', path: '/lessons' },
+];
 
 export const TopBar: React.FC = () => {
   const { role } = useAuth();
   const { signOut, profile } = useSupabaseAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showQuestionModal, setShowQuestionModal] = useState(false);
 
   const handleLogout = async () => {
@@ -34,24 +40,42 @@ export const TopBar: React.FC = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-30 h-16 bg-card/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6">
+      <header className="sticky top-0 z-30 h-16 bg-card/95 backdrop-blur-md border-b border-border/50 flex items-center justify-between px-8">
+        {/* Navigation Links */}
+        <nav className="hidden md:flex items-center gap-8">
+          {navLinks.map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className={cn(
+                "text-sm font-semibold tracking-wide transition-colors",
+                location.pathname === link.path
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
         {/* Search Bar */}
-        <div className="relative w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="relative w-80 mx-auto">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search lessons, topics, messages..."
-            className="pl-10 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary"
+            placeholder="Search..."
+            className="pl-11 bg-secondary/50 border-0 rounded-xl focus-visible:ring-1 focus-visible:ring-primary h-10"
           />
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {/* Quick Question Button (Student only) */}
           {role === 'student' && (
             <Button
-              variant="default"
+              variant="gradient"
               size="sm"
-              className="gap-2 bg-primary hover:bg-primary-dark btn-glow"
+              className="gap-2"
               onClick={() => setShowQuestionModal(true)}
             >
               <Hand className="w-4 h-4" />
@@ -62,7 +86,7 @@ export const TopBar: React.FC = () => {
           {/* Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative rounded-xl">
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
                   <Badge 
@@ -73,7 +97,7 @@ export const TopBar: React.FC = () => {
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuContent align="end" className="w-80 rounded-xl">
               <DropdownMenuLabel className="flex items-center justify-between">
                 Notifications
                 <span className="text-xs text-muted-foreground font-normal">
@@ -85,7 +109,7 @@ export const TopBar: React.FC = () => {
                 <DropdownMenuItem 
                   key={notification.id}
                   className={cn(
-                    "flex flex-col items-start gap-1 cursor-pointer",
+                    "flex flex-col items-start gap-1 cursor-pointer rounded-lg",
                     !notification.read && "bg-primary/5"
                   )}
                 >
@@ -114,9 +138,9 @@ export const TopBar: React.FC = () => {
           </DropdownMenu>
 
           {/* User & Logout */}
-          <div className="flex items-center gap-2 pl-2 border-l border-border">
+          <div className="flex items-center gap-3 pl-3 border-l border-border/50">
             {profile && (
-              <span className="text-sm text-muted-foreground hidden sm:inline">
+              <span className="text-sm font-medium text-foreground hidden sm:inline">
                 {profile.full_name || profile.email}
               </span>
             )}
@@ -125,6 +149,7 @@ export const TopBar: React.FC = () => {
               size="icon"
               onClick={handleLogout}
               title="Log out"
+              className="rounded-xl"
             >
               <LogOut className="w-5 h-5" />
             </Button>
