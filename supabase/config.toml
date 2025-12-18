@@ -1,1 +1,8 @@
 project_id = "wtjqkqzkgijjhrrrwowt"
+
+[auth]
+enabled = true
+site_url = "https://wtjqkqzkgijjhrrrwowt.lovableproject.com"
+
+[auth.external.google]
+enabled = true
