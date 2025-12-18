@@ -165,28 +165,26 @@ const Messages: React.FC = () => {
               group_id: string;
             };
             
-            // Don't add if it's our own message (already added optimistically)
-            if (newMsg.sender_id === supabaseUser?.id) {
-              console.log('[Realtime] Skipping own message');
-              return;
-            }
+            // Fetch sender's name (use own name if it's our message)
+            const isOwnMessage = newMsg.sender_id === supabaseUser?.id;
+            let senderName = isOwnMessage ? myName : 'Classmate';
             
-            // Fetch sender's name
-            let senderName = 'Classmate';
-            const { data: senderProfile } = await supabase
-              .from('profiles')
-              .select('full_name')
-              .eq('id', newMsg.sender_id)
-              .single();
-            
-            if (senderProfile?.full_name) {
-              senderName = senderProfile.full_name;
+            if (!isOwnMessage) {
+              const { data: senderProfile } = await supabase
+                .from('profiles')
+                .select('full_name')
+                .eq('id', newMsg.sender_id)
+                .single();
+              
+              if (senderProfile?.full_name) {
+                senderName = senderProfile.full_name;
+              }
             }
             
             console.log('[Realtime] Adding message from:', senderName);
             
             setMessages((prev) => {
-              // Check if message already exists
+              // Check if message already exists (prevents duplicates on sender's tab)
               if (prev.some(m => m.id === newMsg.id)) {
                 console.log('[Realtime] Message already exists, skipping');
                 return prev;
