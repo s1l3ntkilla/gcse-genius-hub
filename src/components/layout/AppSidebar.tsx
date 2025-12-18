@@ -195,28 +195,28 @@ export const AppSidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
       collapsed ? "w-20" : "w-72"
     )}>
       {/* Logo Section */}
-      <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
-        <div className="relative flex items-center justify-center h-10">
-          {/* Full logo - visible when expanded */}
-          <img 
-            src={notedlyLogo} 
-            alt="Notedly" 
-            className={cn(
-              "h-9 object-contain transition-all duration-300 ease-in-out",
-              collapsed 
-                ? "opacity-0 scale-75 absolute pointer-events-none" 
-                : "opacity-100 scale-100 w-auto max-w-[160px]"
-            )} 
-          />
-          {/* Icon - visible when collapsed */}
+      <div className="flex items-center h-16 px-4 border-b border-sidebar-border overflow-hidden">
+        <div className="relative flex items-center h-10 w-full">
+          {/* Icon - stays in place on the left */}
           <img 
             src={notedlyIcon} 
             alt="Notedly" 
             className={cn(
-              "h-10 w-10 object-contain transition-all duration-300 ease-in-out",
+              "h-10 w-10 object-contain transition-all duration-300 ease-in-out flex-shrink-0",
               collapsed 
-                ? "opacity-100 scale-100" 
-                : "opacity-0 scale-75 absolute pointer-events-none"
+                ? "opacity-100" 
+                : "opacity-0"
+            )} 
+          />
+          {/* Full logo - overlays and slides left when collapsing */}
+          <img 
+            src={notedlyLogo} 
+            alt="Notedly" 
+            className={cn(
+              "h-9 object-contain object-left transition-all duration-300 ease-in-out absolute left-0",
+              collapsed 
+                ? "opacity-0 -translate-x-full" 
+                : "opacity-100 translate-x-0 w-auto max-w-[160px]"
             )} 
           />
         </div>
