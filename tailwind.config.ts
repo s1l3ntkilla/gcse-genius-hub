@@ -15,13 +15,12 @@ export default {
   	extend: {
   		fontFamily: {
   			sans: [
-  				'Source Sans Pro',
+  				'Roboto',
   				'ui-sans-serif',
   				'system-ui',
   				'-apple-system',
   				'BlinkMacSystemFont',
   				'Segoe UI',
-  				'Roboto',
   				'Helvetica Neue',
   				'Arial',
   				'Noto Sans',
@@ -33,7 +32,7 @@ export default {
   				'sans-serif'
   			],
   			serif: [
-  				'Source Serif Pro',
+  				'Libre Caslon Text',
   				'ui-serif',
   				'Georgia',
   				'Cambria',
@@ -42,7 +41,7 @@ export default {
   				'serif'
   			],
   			mono: [
-  				'Source Code Pro',
+  				'Roboto Mono',
   				'ui-monospace',
   				'SFMono-Regular',
   				'Menlo',
@@ -152,7 +151,7 @@ export default {
   					height: '0'
   				}
   			},
-  			'flip': {
+  			flip: {
   				'0%': {
   					transform: 'rotateY(0deg)'
   				},
@@ -180,7 +179,7 @@ export default {
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
-  			'flip': 'flip 0.6s ease-in-out',
+  			flip: 'flip 0.6s ease-in-out',
   			'flip-back': 'flip-back 0.6s ease-in-out',
   			'bounce-soft': 'bounce-soft 2s ease-in-out infinite'
   		}
