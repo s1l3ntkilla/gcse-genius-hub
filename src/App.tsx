@@ -12,6 +12,7 @@ import Messages from "./pages/Messages";
 import ClassroomQA from "./pages/ClassroomQA";
 import Lessons from "./pages/Lessons";
 import Assignments from "./pages/Assignments";
+import MyClasses from "./pages/MyClasses";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
@@ -81,7 +82,7 @@ const AppRoutes = () => (
       <Route path="/qa" element={<ClassroomQA />} />
       <Route path="/lessons" element={<Lessons />} />
       <Route path="/assignments" element={<Assignments />} />
-      <Route path="/classes" element={<Index />} />
+      <Route path="/classes" element={<MyClasses />} />
       <Route path="/analytics" element={<Index />} />
       <Route path="*" element={<NotFound />} />
     </Route>
