@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Bot, X, Send, Maximize2, Minimize2, Sparkles, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
+import { useToast } from '@/hooks/use-toast';
 
 interface Message {
   id: string;
@@ -13,12 +14,7 @@ interface Message {
   timestamp: Date;
 }
 
-const mockResponses: Record<string, string> = {
-  'default': "I'm your AI Learning Assistant! I can help you understand concepts, explain topics step-by-step, and answer questions about your subjects. What would you like to learn about?",
-  'quadratic': "Great question! The quadratic formula x = (-b ± √(b² - 4ac)) / 2a is used to solve equations of the form ax² + bx + c = 0.\n\n**Step 1:** Identify a, b, and c from your equation\n**Step 2:** Calculate the discriminant (b² - 4ac)\n**Step 3:** If discriminant ≥ 0, plug values into the formula\n\nWould you like me to walk through an example?",
-  'mitochondria': "The mitochondria is often called the 'powerhouse of the cell' because it produces ATP (adenosine triphosphate) - the energy currency that powers all cellular activities.\n\n**Key Points:**\n- Has a double membrane structure\n- Contains its own DNA\n- Performs cellular respiration\n- More mitochondria in cells that need more energy (like muscle cells)\n\nShall I explain the process of cellular respiration?",
-  'python': "Python loops are fundamental for repeating actions!\n\n**For Loop** - when you know how many times to repeat:\n```python\nfor i in range(5):\n    print(i)  # Prints 0, 1, 2, 3, 4\n```\n\n**While Loop** - when you repeat until a condition is false:\n```python\ncount = 0\nwhile count < 5:\n    print(count)\n    count += 1\n```\n\nWant me to explain more complex loop patterns?",
-};
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 export const AIAssistantWidget: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,16 +23,25 @@ export const AIAssistantWidget: React.FC = () => {
     {
       id: '1',
       role: 'assistant',
-      content: mockResponses['default'],
+      content: "Hi! I'm your AI Learning Assistant. I can help you understand concepts, explain topics step-by-step, and answer questions about your GCSE subjects. What would you like to learn about?",
       timestamp: new Date(),
     }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [difficulty, setDifficulty] = useState([50]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, isTyping]);
+
+  const handleSend = async () => {
+    if (!input.trim() || isTyping) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -49,29 +54,100 @@ export const AIAssistantWidget: React.FC = () => {
     setInput('');
     setIsTyping(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      let response = mockResponses['default'];
-      const lowerInput = input.toLowerCase();
-      
-      if (lowerInput.includes('quadratic') || lowerInput.includes('formula')) {
-        response = mockResponses['quadratic'];
-      } else if (lowerInput.includes('mitochondria') || lowerInput.includes('cell')) {
-        response = mockResponses['mitochondria'];
-      } else if (lowerInput.includes('python') || lowerInput.includes('loop')) {
-        response = mockResponses['python'];
+    // Prepare conversation history for the API
+    const conversationHistory = [...messages, userMessage].map(msg => ({
+      role: msg.role,
+      content: msg.content,
+    }));
+
+    try {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: conversationHistory,
+          difficulty: difficulty[0],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get response');
       }
 
-      const assistantMessage: Message = {
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response body');
+
+      const decoder = new TextDecoder();
+      let assistantContent = '';
+      const assistantMessageId = (Date.now() + 1).toString();
+
+      // Create the assistant message placeholder
+      setMessages(prev => [...prev, {
+        id: assistantMessageId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+      }]);
+      setIsTyping(false);
+
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // Process complete SSE lines
+        let newlineIndex: number;
+        while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+          let line = buffer.slice(0, newlineIndex);
+          buffer = buffer.slice(newlineIndex + 1);
+
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (line.startsWith(':') || line.trim() === '') continue;
+          if (!line.startsWith('data: ')) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              assistantContent += content;
+              setMessages(prev => prev.map(msg =>
+                msg.id === assistantMessageId
+                  ? { ...msg, content: assistantContent }
+                  : msg
+              ));
+            }
+          } catch {
+            // Incomplete JSON, will be handled in next chunk
+          }
+        }
+      }
+    } catch (error) {
+      console.error('AI Assistant error:', error);
+      setIsTyping(false);
+      
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to get response',
+        variant: 'destructive',
+      });
+
+      // Add error message to chat
+      setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response,
+        content: "I'm sorry, I encountered an error. Please try again in a moment.",
         timestamp: new Date(),
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-      setIsTyping(false);
-    }, 1500);
+      }]);
+    }
   };
 
   if (!isOpen) {
@@ -133,7 +209,7 @@ export const AIAssistantWidget: React.FC = () => {
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         <div className="space-y-4">
           {messages.map((message) => (
             <div
@@ -178,14 +254,15 @@ export const AIAssistantWidget: React.FC = () => {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
             placeholder="Ask me anything..."
             className="flex-1"
+            disabled={isTyping}
           />
           <Button 
             onClick={handleSend} 
             size="icon"
-            disabled={!input.trim()}
+            disabled={!input.trim() || isTyping}
             className="shrink-0 bg-primary hover:bg-primary-dark"
           >
             <Send className="w-4 h-4" />

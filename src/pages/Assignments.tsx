@@ -14,14 +14,17 @@ import {
   Download,
   Calendar,
   ChevronRight,
-  Star
+  Star,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import AssignmentWizard from '@/components/features/AssignmentWizard';
 
 const Assignments: React.FC = () => {
   const { role } = useAuth();
   const [selectedTab, setSelectedTab] = useState('pending');
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   // Empty state - no mock data
   const pendingAssignments: any[] = [];
@@ -45,12 +48,15 @@ const Assignments: React.FC = () => {
             </p>
           </div>
           {role === 'teacher' && (
-            <Button className="bg-primary hover:bg-primary-dark gap-2">
-              <FileText className="w-4 h-4" />
+            <Button onClick={() => setWizardOpen(true)} className="bg-primary hover:bg-primary-dark gap-2">
+              <Sparkles className="w-4 h-4" />
               Create Assignment
             </Button>
           )}
         </div>
+
+        {/* Assignment Wizard */}
+        <AssignmentWizard open={wizardOpen} onOpenChange={setWizardOpen} />
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

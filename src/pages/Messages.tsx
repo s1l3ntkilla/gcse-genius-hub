@@ -37,7 +37,6 @@ type GroupMessage = {
   message_content: string;
   created_at: string | null;
   sender_name?: string | null;
-  message_type?: string | null;
 };
 
 const Messages: React.FC = () => {
@@ -53,7 +52,6 @@ const Messages: React.FC = () => {
   const [createName, setCreateName] = useState('');
   const [createSubject, setCreateSubject] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
-  const [showInviteForm, setShowInviteForm] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const filteredClassrooms = useMemo(() => {
@@ -101,7 +99,7 @@ const Messages: React.FC = () => {
     setActionError(null);
     const { data, error } = await supabase
       .from('group_messages')
-      .select('id, sender_id, message_content, message_type, created_at, profiles:sender_id(full_name)')
+      .select('id, sender_id, message_content, created_at, profiles:sender_id(full_name)')
       .eq('group_id', groupId)
       .order('created_at', { ascending: true });
 
@@ -112,18 +110,13 @@ const Messages: React.FC = () => {
       return;
     }
 
-    setMessages(
-      (data || [])
-        .filter((msg) => msg.message_type === null || msg.message_type === 'text')
-        .map((msg) => ({
-          id: msg.id,
-          sender_id: msg.sender_id,
-          message_content: msg.message_content,
-          created_at: msg.created_at,
-          sender_name: (msg as any).profiles?.full_name || 'Member',
-          message_type: msg.message_type
-        }))
-    );
+    setMessages((data || []).map((msg) => ({
+      id: msg.id,
+      sender_id: msg.sender_id,
+      message_content: msg.message_content,
+      created_at: msg.created_at,
+      sender_name: (msg as any).profiles?.full_name || 'Member'
+    })));
     setIsLoadingMessages(false);
   };
 
@@ -150,7 +143,7 @@ const Messages: React.FC = () => {
         message_content: newMessage,
         message_type: 'text'
       })
-      .select('id, sender_id, message_content, message_type, created_at')
+      .select('id, sender_id, message_content, created_at')
       .single();
 
     if (error) {
@@ -251,7 +244,6 @@ const Messages: React.FC = () => {
     }
 
     setInviteEmail('');
-    setShowInviteForm(false);
     await fetchClassrooms();
   };
 
@@ -358,33 +350,16 @@ const Messages: React.FC = () => {
                   {actionError && <p className="text-sm text-destructive mt-1">{actionError}</p>}
                 </div>
                 {role === 'teacher' && (
-                  <div className="flex items-center gap-3">
-                    {showInviteForm && (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          placeholder="Student email"
-                          value={inviteEmail}
-                          onChange={(e) => setInviteEmail(e.target.value)}
-                          className="w-64"
-                        />
-                        <Button
-                          variant="secondary"
-                          className="gap-2"
-                          onClick={handleInviteStudent}
-                          disabled={!inviteEmail.trim()}
-                        >
-                          <Mail className="w-4 h-4" />
-                          Invite
-                        </Button>
-                      </div>
-                    )}
-                    <Button
-                      variant="outline"
-                      className="gap-2"
-                      onClick={() => setShowInviteForm((open) => !open)}
-                    >
-                      <Users className="w-4 h-4" />
-                      {showInviteForm ? 'Hide invite' : 'Add students'}
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="Student email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      className="w-64"
+                    />
+                    <Button variant="outline" className="gap-2" onClick={handleInviteStudent}>
+                      <Mail className="w-4 h-4" />
+                      Add student
                     </Button>
                   </div>
                 )}
