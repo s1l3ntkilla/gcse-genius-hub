@@ -13,6 +13,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Skip link for keyboard accessibility */}
+      <a 
+        href="#main-content" 
+        className="skip-link"
+      >
+        Skip to main content
+      </a>
+
       <AppSidebar 
         collapsed={sidebarCollapsed} 
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
@@ -23,7 +31,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         sidebarCollapsed ? "ml-16" : "ml-64"
       )}>
         <TopBar />
-        <main className="p-6">
+        <main id="main-content" className="p-6" role="main" aria-label="Main content">
           {children}
         </main>
       </div>
